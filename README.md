@@ -1,77 +1,57 @@
-# AbridgeAI
+# AbridgeAI — Agent Workspace
 
-**Long content. Sharp summaries.**
+A static, client-side workspace that turns a project idea into an AO-ready task prompt.
+No build step, no backend, no external AI calls: every agent output is **deterministic** —
+the same inputs always produce the same outputs.
 
-AbridgeAI is a static MVP for an AI text-abridgement product: paste long articles,
-documents, meeting notes, or research, and get a clear, accurate summary in seconds.
+## What it does
 
-This MVP is **fully static** — pure HTML, CSS, and vanilla JavaScript with no build
-step, no dependencies, and no backend. The abridgement engine runs entirely in the
-browser, so content never leaves the device.
+Fill in the form (name, preferred stack, GitHub username, project idea, deadline,
+comfort level) and run the pipeline. Five agents run in order, visible in the rail
+on the right:
 
-## Pages
+1. **GitHub Agent** — fetches the public GitHub profile + repos via the public GitHub API
+   (client-side). Falls back to bundled sample data (`data/sample-github-analysis.json`)
+   when the API is unreachable, rate-limited, or the user doesn't exist.
+2. **Research Agent** — deterministic opportunity / risk / direction scan.
+3. **Architecture Agent** — deterministic module + data-flow blueprint.
+4. **Tech Stack Agent** — deterministic stack recommendation from your preference.
+5. **AO Task Agent** — assembles one copyable, AO-ready task prompt. The **Copy prompt**
+   button writes it to your clipboard.
 
-| Page | Path | Purpose |
-|---|---|---|
-| Landing page | `index.html` | Hero, features, how it works, pricing teaser, testimonials, FAQ |
-| Live demo | `demo.html` | Working in-browser abridgement demo |
-| Pricing | `pricing.html` | Plans and feature comparison table |
-| About | `about.html` | Mission, how it works, roadmap, contact |
+Completed runs are saved to the left-hand **project history** (localStorage). Clicking
+an entry restores it into the form.
 
-## Running it
+## Run it
 
-Because the site is static, just open `index.html` in a browser, or serve the folder
-with any static file server:
+Static files only — open `index.html` in any browser, or serve the folder:
 
-```bash
-# Python
-python -m http.server 8080
-
-# npx (only if you already use Node)
-npx serve .
+```sh
+# any static server works, e.g.
+python -m http.server 8000
+# then open http://localhost:8000
 ```
 
-Then visit `http://localhost:8080`.
+## Layout
 
-No `npm install`, no build step, no API keys.
+- **Left rail** — empty project history (populates after runs).
+- **Center** — form + generated outputs.
+- **Right rail** — live agent pipeline (status per agent).
 
-## How the demo abridgement works
+Style: warm off-white background, near-black text, one lime accent, hairline borders.
 
-`js/demo.js` implements a lightweight **extractive summarization** algorithm:
+## Files
 
-1. Split input into sentences.
-2. Score each sentence by the frequency of its important keywords (stop words removed).
-3. Apply a small position bonus so opening and closing sentences are considered.
-4. Keep the top-scoring sentences in their original order to form the summary.
+| File | Purpose |
+| --- | --- |
+| `index.html` | Workspace shell (history / form / pipeline). |
+| `styles.css` | Design system. |
+| `script.js` | GitHub parser, deterministic agents, pipeline runner, history, copy. |
+| `data/sample-github-analysis.json` | Fallback GitHub profile + repos when the API is unavailable. |
 
-Because the output is extracted from the source text, every word is faithful to the
-original — the algorithm never invents facts.
+## Notes
 
-Options in the demo: summary length (short / medium / long), output format
-(paragraph / bullets), and optional key takeaways.
-
-## File structure
-
-```
-├── index.html          Landing page
-├── demo.html           Interactive demo
-├── pricing.html        Pricing plans & comparison
-├── about.html          About, roadmap, contact
-├── css/styles.css      Shared design system
-├── js/main.js          Shared nav/FAQ/toast behavior
-├── js/demo.js          Abridgement engine + demo UI
-└── assets/favicon.svg  Logo / favicon
-```
-
-## Roadmap (static MVP scope)
-
-- [x] In-browser extractive abridgement demo
-- [x] Landing, pricing, and about pages
-- [ ] Generative (paraphrasing) summaries
-- [ ] URL & PDF import
-- [ ] Accounts, history, and saved summaries
-- [ ] PDF / DOCX export
-
-## License
-
-Licensed under the [Apache License 2.0](LICENSE).
+- GitHub API usage is unauthenticated (60 req/hr/IP). On failure the pipeline
+  transparently falls back to sample data and labels the card accordingly.
+- Determinism is guaranteed by hashing inputs (djb2) before selecting from fixed
+  knowledge pools — no randomness anywhere in the pipeline.
