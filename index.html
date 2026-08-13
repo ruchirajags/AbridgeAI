@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AbridgeAI — Project Workspace</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- ============ LEFT: PROJECT HISTORY ============ -->
+    <aside class="rail rail--left" aria-label="Project history">
+      <div class="rail-head">
+        <span class="rail-label">History</span>
+        <span class="rail-count" id="history-count">0</span>
+      </div>
+      <div class="history-empty" id="history-empty">
+        No projects yet.<br />
+        Run the pipeline to save a project here.
+      </div>
+      <ol class="history-list" id="history-list"></ol>
+    </aside>
+
+    <!-- ============ CENTER: FORM + OUTPUTS ============ -->
+    <main class="center">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-name">AbridgeAI</span>
+        </div>
+        <div class="status" id="status" data-state="idle">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-text" id="status-text">idle</span>
+        </div>
+      </header>
+
+      <section class="panel panel--form">
+        <h1>Scaffold a project brief</h1>
+        <p class="panel-sub">Fill the form. The agent pipeline on the right turns it into an AO-ready task.</p>
+
+        <form id="project-form" class="form">
+          <div class="field">
+            <label for="f-name">Name</label>
+            <input id="f-name" name="name" type="text" placeholder="Ada" autocomplete="off" />
+          </div>
+
+          <div class="field">
+            <label for="f-stack">Preferred stack</label>
+            <select id="f-stack" name="stack">
+              <option value="typescript">TypeScript / JavaScript</option>
+              <option value="python">Python</option>
+              <option value="go">Go</option>
+              <option value="rust">Rust</option>
+              <option value="unsure">Not sure yet</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="f-github">GitHub username</label>
+            <input id="f-github" name="github" type="text" placeholder="octocat" autocomplete="off" />
+          </div>
+
+          <div class="field">
+            <label for="f-deadline">Deadline</label>
+            <input id="f-deadline" name="deadline" type="text" placeholder="e.g. 4 weeks" autocomplete="off" />
+          </div>
+
+          <div class="field">
+            <label for="f-comfort">Comfort level</label>
+            <select id="f-comfort" name="comfort">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+
+          <div class="field field--full">
+            <label for="f-idea">Project idea</label>
+            <textarea id="f-idea" name="idea" rows="4" placeholder="A CLI that turns meeting notes into action items, with a simple web dashboard."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary" id="run-btn">Run pipeline</button>
+            <span class="form-hint" id="form-hint"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel panel--outputs" id="outputs-panel" hidden>
+        <h2>Generated outputs</h2>
+        <div class="outputs" id="outputs"></div>
+      </section>
+    </main>
+
+    <!-- ============ RIGHT: LIVE PIPELINE RAIL ============ -->
+    <aside class="rail rail--right" aria-label="Agent pipeline">
+      <div class="rail-head">
+        <span class="rail-label">Agent pipeline</span>
+        <span class="rail-state" id="pipeline-state">standby</span>
+      </div>
+      <ol class="pipeline" id="pipeline">
+        <li class="pipe" data-step="github">
+          <span class="pipe-dot" aria-hidden="true"></span>
+          <span class="pipe-name">GitHub Agent</span>
+          <span class="pipe-status">queued</span>
+        </li>
+        <li class="pipe" data-step="research">
+          <span class="pipe-dot" aria-hidden="true"></span>
+          <span class="pipe-name">Research Agent</span>
+          <span class="pipe-status">queued</span>
+        </li>
+        <li class="pipe" data-step="architecture">
+          <span class="pipe-dot" aria-hidden="true"></span>
+          <span class="pipe-name">Architecture Agent</span>
+          <span class="pipe-status">queued</span>
+        </li>
+        <li class="pipe" data-step="stack">
+          <span class="pipe-dot" aria-hidden="true"></span>
+          <span class="pipe-name">Tech Stack Agent</span>
+          <span class="pipe-status">queued</span>
+        </li>
+        <li class="pipe" data-step="task">
+          <span class="pipe-dot" aria-hidden="true"></span>
+          <span class="pipe-name">AO Task Agent</span>
+          <span class="pipe-status">queued</span>
+        </li>
+      </ol>
+    </aside>
+
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
