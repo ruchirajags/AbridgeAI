@@ -638,6 +638,112 @@ body {
   border-color: var(--line-strong);
 }
 
+/* Scaffold download action in the Builder card header */
+.card-download {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--lime-ink);
+  background: var(--lime);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.card-download:hover {
+  background: var(--lime-bright);
+  border-color: var(--ink);
+}
+
+/* --------------------------------------------------------------------------
+   Feasibility meter (score, track, verdict badge)
+   -------------------------------------------------------------------------- */
+.feas-meter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.feas-score {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.feas-score-num {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.feas-score-max {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.feas-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  border: var(--hairline);
+  overflow: hidden;
+}
+
+.feas-fill {
+  height: 100%;
+  background: var(--lime);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.feas-verdict {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.feas-verdict--good {
+  color: var(--lime-ink);
+  background: var(--lime-soft);
+  border-color: var(--lime-ink);
+}
+
+.feas-verdict--warn {
+  color: #7a5b00;
+  background: #f7ecbb;
+  border-color: #d8b53c;
+}
+
+.feas-verdict--bad {
+  color: var(--danger);
+  background: rgba(194, 64, 43, 0.12);
+  border-color: var(--danger);
+}
+
+[data-theme="dark"] .feas-verdict--warn {
+  color: #f3dd8a;
+  background: rgba(216, 181, 60, 0.16);
+  border-color: #d8b53c;
+}
+
+[data-theme="dark"] .feas-verdict--bad {
+  background: rgba(255, 129, 100, 0.14);
+}
+
 /* --------------------------------------------------------------------------
    Right rail: pipeline
    -------------------------------------------------------------------------- */

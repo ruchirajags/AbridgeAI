@@ -31,7 +31,7 @@
   var themeBtn = $("#theme-btn");
   var exportBtn = $("#export-btn");
 
-  var STEP_ORDER = ["github", "research", "architecture", "stack", "task"];
+  var STEP_ORDER = ["github", "research", "feasibility", "architecture", "stack", "builder", "task"];
 
   var HISTORY_KEY = "abridgeai.history.v1";
   var DRAFT_KEY = "abridgeai.draft.v1";
@@ -425,6 +425,568 @@
     return lines.join("\n");
   }
 
+  // ------------------------------------------------------------------------
+  // Feasibility Agent — deterministic score, verdict, estimate, risk register
+  // ------------------------------------------------------------------------
+  var PROJECT_TYPES = {
+    tool: "CLI / developer tool",
+    "web-app": "Web app",
+    service: "API / service",
+    "data-pipeline": "Data pipeline",
+    unsure: "Not sure yet"
+  };
+
+  var TEAM_SIZES = {
+    solo: "Solo",
+    pair: "Pair",
+    "small-team": "Small team (3–5)"
+  };
+
+  var PHASE_PLAN = [
+    { week: 1, title: "Foundation", deliver: "repo, tooling, CI, module skeleton, fixtures" },
+    { week: 2, title: "Core slice", deliver: "the main input → output flow, end to end" },
+    { week: 3, title: "Harden", deliver: "edge cases, error taxonomy, tests per module" },
+    { week: 4, title: "Ship", deliver: "docs, packaging, release notes, demo" }
+  ];
+
+  var FEAS_RISKS = [
+    { risk: "Feature creep pulls the timeline out.", fix: "Freeze scope after the foundation phase and ship the vertical slice." },
+    { risk: "Integration friction with existing workflows blocks adoption.", fix: "Design a paste-ready output and a copyable CLI from day one." },
+    { risk: "Underspecified inputs produce unreliable outputs.", fix: "Define the input contract explicitly in the first milestone." },
+    { risk: "Solo support load grows faster than the feature set.", fix: "Keep the surface area small; automate errors and self-help." },
+    { risk: "The stack is unfamiliar at this comfort level.", fix: "Use the scaffolded starter files and step-by-step notes for the first week." }
+  ];
+
+  function padScore(n, max) {
+    var s = String(n);
+    while (s.length < String(max).length) s = " " + s;
+    return s + "/" + max;
+  }
+
+  function feasibilityAgent(input) {
+    var idea = String(input.idea || "").trim();
+    var words = idea ? idea.split(/\s+/).length : 0;
+    var audience = String(input.audience || "").trim();
+    var comfort = input.comfort || "beginner";
+    var typeKey = PROJECT_TYPES[input.type] ? input.type : "unsure";
+    var teamKey = TEAM_SIZES[input.team] ? input.team : "solo";
+    var dl = String(input.deadline || "").toLowerCase();
+
+    // Deterministic score, 100 points across five weighted axes.
+    var clarity = Math.min(30, Math.floor(words * 0.5) + (audience ? 3 : 0));
+    var stackFit = comfort === "advanced" ? 25 : comfort === "intermediate" ? 20 : 15;
+    var scope = { tool: 20, "data-pipeline": 18, service: 15, "web-app": 14, unsure: 10 }[typeKey];
+    var time = dl.indexOf("month") !== -1 ? 14
+      : dl.indexOf("week") !== -1 ? 12
+      : dl === "" ? 8
+      : /^\s*\d+\s*$/.test(String(input.deadline || "")) ? 9 : 10;
+    var builderFit = input.stack && input.stack !== "unsure" ? 10 : 6;
+
+    var score = Math.max(0, Math.min(100, clarity + stackFit + scope + time + builderFit));
+
+    var verdictClass, verdict, verdictMsg;
+    if (score >= 70) {
+      verdictClass = "good";
+      verdict = "GO";
+      verdictMsg = "Worth building now — scope and stack line up with a realistic path.";
+    } else if (score >= 50) {
+      verdictClass = "warn";
+      verdict = "Proceed with caution";
+      verdictMsg = "Buildable — tighten scope or extend the deadline before committing.";
+    } else {
+      verdictClass = "bad";
+      verdict = "Rethink / reshape";
+      verdictMsg = "Too much surface for the current setup — reshape the scope first.";
+    }
+
+    var estimate = score >= 75 ? "Lean" : score >= 55 ? "Medium" : "Large";
+    var weeks = score >= 75 ? "1–2" : score >= 55 ? "3–5" : "6–10";
+
+    var seed = hash((input.idea || "") + "|" + input.stack + "|" + comfort + "|" + input.deadline + "|" + typeKey);
+    var risks = pick(seed, FEAS_RISKS, 3);
+
+    var stackLabel = input.stack && STACKS[input.stack] && input.stack !== "unsure"
+      ? STACKS[input.stack].label
+      : "default stack";
+
+    var lines = [];
+    lines.push("Feasibility: " + score + "/100 — " + verdict);
+    lines.push("Verdict: " + verdictMsg);
+    lines.push("");
+    lines.push("Score card");
+    lines.push("  Idea clarity  " + padScore(clarity, 30) + "  (" + words + " words" + (audience ? " · audience: yes" : "") + ")");
+    lines.push("  Stack fit     " + padScore(stackFit, 25) + "  (" + comfort + ")");
+    lines.push("  Scope         " + padScore(scope, 20) + "  (" + (PROJECT_TYPES[typeKey] || typeKey).toLowerCase() + ")");
+    lines.push("  Time realism  " + padScore(time, 15) + "  (" + (input.deadline || "no deadline") + ")");
+    lines.push("  Builder fit   " + padScore(builderFit, 10) + "  (" + stackLabel + ")");
+    lines.push("");
+    lines.push("Estimate: " + estimate + " — ~" + weeks + " weeks (" + (TEAM_SIZES[teamKey] || "Solo") + ")");
+    lines.push("");
+    lines.push("Phases");
+    PHASE_PLAN.forEach(function (p, i) {
+      lines.push("  " + (i + 1) + ". W" + p.week + " " + p.title + " — " + p.deliver);
+    });
+    lines.push("");
+    lines.push("Risks & mitigations");
+    risks.forEach(function (r, i) {
+      lines.push("  " + (i + 1) + ". " + r.risk);
+      lines.push("     " + r.fix);
+    });
+
+    return {
+      score: score,
+      verdict: verdict,
+      verdictClass: verdictClass,
+      estimate: estimate + " — ~" + weeks + " weeks",
+      text: lines.join("\n")
+    };
+  }
+
+  // ------------------------------------------------------------------------
+  // Builder Agent — starter scaffold (file tree + files) and milestone plan
+  // ------------------------------------------------------------------------
+  function builderAgent(input, feasibility) {
+    var stackKey = input.stack || "unsure";
+    var stack = STACKS[stackKey] || STACKS.unsure;
+    var slug = slugify(input.name || input.idea || "project");
+    var files = scaffoldFiles(input, slug);
+    var treeLines = renderTree(files, slug);
+    var milestones = buildMilestones();
+    var dirs = countDirs(files);
+
+    var lines = [];
+    lines.push("Builder plan");
+    lines.push("Scaffold: " + files.length + " files · " + dirs + " directories (" + stack.label + ")");
+    if (stackKey === "unsure") {
+      lines.push("Stack: recommended default (TypeScript / JavaScript) until the stack is decided.");
+    }
+    lines.push("");
+    lines.push("File tree");
+    treeLines.forEach(function (l) { lines.push("  " + l); });
+    lines.push("");
+    lines.push("Starter files");
+    files.forEach(function (f) {
+      lines.push("  " + f.path + " — " + filePurpose(f.path));
+    });
+    lines.push("");
+    lines.push("Milestones");
+    milestones.forEach(function (m, i) {
+      lines.push("  M" + (i + 1) + " · W" + m.week + " " + m.title);
+      m.tasks.forEach(function (t) { lines.push("    - " + t); });
+      lines.push("    Done when: " + m.accept);
+    });
+
+    return {
+      text: lines.join("\n"),
+      folder: slug,
+      files: files
+    };
+  }
+
+  function countDirs(files) {
+    var dirs = {};
+    files.forEach(function (f) {
+      var parts = f.path.split("/");
+      if (parts.length > 1) {
+        for (var i = 1; i < parts.length; i++) {
+          dirs[parts.slice(0, i).join("/")] = true;
+        }
+      }
+    });
+    return Object.keys(dirs).length;
+  }
+
+  function renderTree(files, rootName) {
+    var root = {};
+    files.forEach(function (f) {
+      var parts = f.path.split("/");
+      var node = root;
+      parts.forEach(function (part) {
+        if (!node[part]) node[part] = {};
+        node = node[part];
+      });
+    });
+    var lines = [];
+    if (rootName) lines.push(rootName + "/");
+    (function walk(node, prefix) {
+      var keys = Object.keys(node).sort();
+      keys.forEach(function (k, i) {
+        var last = i === keys.length - 1;
+        var children = node[k];
+        var label = k + (Object.keys(children).length ? "/" : "");
+        lines.push(prefix + (last ? "└── " : "├── ") + label);
+        if (Object.keys(children).length) {
+          walk(children, prefix + (last ? "    " : "│   "));
+        }
+      });
+    })(root, "");
+    return lines;
+  }
+
+  function filePurpose(path) {
+    var name = path.split("/").pop();
+    var map = {
+      "package.json": "scripts, dev deps, module config",
+      "tsconfig.json": "strict TypeScript config",
+      "pyproject.toml": "project metadata, deps, pytest + ruff config",
+      "go.mod": "module definition",
+      "Cargo.toml": "crate metadata and deps",
+      "index.ts": "entry point — parse input, run core, print output",
+      "main.py": "entry point — Typer CLI over the core",
+      "main.go": "entry point — parse args, run core",
+      "main.rs": "entry point — parse args, run core",
+      "core.ts": "pure deterministic core",
+      "core.py": "pure deterministic core",
+      "core.go": "pure deterministic core",
+      "core.rs": "pure deterministic core",
+      "core.test.ts": "first unit test for the core",
+      "test_core.py": "first unit test for the core",
+      "core_test.go": "first unit test for the core",
+      "__init__.py": "package marker",
+      "README.md": "quick start + run instructions",
+      "PLAN.md": "feasibility summary + milestones",
+      ".gitignore": "ignore build artifacts"
+    };
+    return map[name] || "project file";
+  }
+
+  function buildMilestones() {
+    return [
+      { week: 1, title: "Foundation", tasks: ["Scaffold the repo from the starter files.", "Wire build, test, and lint scripts.", "Add fixtures for the first input sample."], accept: "the repo builds and the placeholder test passes." },
+      { week: 2, title: "Core slice", tasks: ["Implement the main input → output flow in the core module.", "Connect the entry point to the core."], accept: "running the CLI on the sample input produces the expected output." },
+      { week: 3, title: "Harden", tasks: ["Add error taxonomy and edge-case handling.", "Unit-test every module with fixed fixtures."], accept: "all tests are green and failures are clear and actionable." },
+      { week: 4, title: "Ship", tasks: ["Write docs and a README quick start.", "Tag a release and open the PR."], accept: "a fresh clone builds and runs straight from the README." }
+    ];
+  }
+
+  function scaffoldFiles(input, slug) {
+    var stackKey = input.stack || "unsure";
+    var name = input.name || slug;
+    var desc = input.idea || "A deterministic tool.";
+    var files = [{ path: "PLAN.md", content: planMarkdown(input, slug) }];
+    var starter = stackKey === "python" ? pyStarter(slug, name, desc)
+      : stackKey === "go" ? goStarter(slug, name, desc)
+      : stackKey === "rust" ? rustStarter(slug, name, desc)
+      : tsStarter(slug, name, desc); // typescript + unsure (recommended default)
+    return files.concat(starter);
+  }
+
+  function planMarkdown(input, slug) {
+    var f = feasibilityAgent(input);
+    var lines = [];
+    lines.push("# " + (input.name || slug) + " — Build Plan");
+    lines.push("");
+    lines.push("- **Idea:** " + (input.idea || "—"));
+    lines.push("- **Feasibility:** " + f.score + "/100 — " + f.verdict);
+    lines.push("- **Estimate:** " + f.estimate);
+    lines.push("");
+    lines.push("## Milestones");
+    buildMilestones().forEach(function (m, i) {
+      lines.push("### M" + (i + 1) + " — W" + m.week + " " + m.title);
+      lines.push("");
+      m.tasks.forEach(function (t) { lines.push("- " + t); });
+      lines.push("- **Done when:** " + m.accept);
+      lines.push("");
+    });
+    return lines.join("\n");
+  }
+
+  function tsStarter(slug, name, desc) {
+    var pkg = {
+      name: slug,
+      version: "0.1.0",
+      private: true,
+      type: "module",
+      description: desc,
+      scripts: { build: "tsc", test: "vitest run", "test:watch": "vitest", lint: "biome check src" },
+      devDependencies: { typescript: "^5.5.0", vitest: "^2.1.0", "@types/node": "^22.0.0", "@biomejs/biome": "^1.9.0" }
+    };
+    var tsconfig = {
+      compilerOptions: {
+        target: "ES2022", module: "NodeNext", moduleResolution: "NodeNext",
+        strict: true, outDir: "dist", rootDir: "src",
+        declaration: true, sourceMap: true, esModuleInterop: true, skipLibCheck: true
+      },
+      include: ["src"]
+    };
+    return [
+      { path: "package.json", content: JSON.stringify(pkg, null, 2) + "\n" },
+      { path: "tsconfig.json", content: JSON.stringify(tsconfig, null, 2) + "\n" },
+      { path: "src/index.ts", content:
+        "// " + name + " — " + desc + "\n" +
+        "// Entry point: parse the input, run the deterministic core, print output.\n" +
+        "\n" +
+        'import { run } from "./core.js";\n' +
+        "\n" +
+        "function main() {\n" +
+        '  const input = process.argv.slice(2).join(" ");\n' +
+        '  process.stdout.write(run(input) + "\\n");\n' +
+        "}\n" +
+        "\n" +
+        "main();\n" },
+      { path: "src/core.ts", content:
+        "// Pure, deterministic core — no side effects, no external AI calls.\n" +
+        "export function run(input: string): string {\n" +
+        '  return "received: " + input;\n' +
+        "}\n" },
+      { path: "test/core.test.ts", content:
+        'import { describe, expect, it } from "vitest";\n' +
+        'import { run } from "../src/core.js";\n' +
+        "\n" +
+        'describe("core", () => {\n' +
+        '  it("handles empty input", () => {\n' +
+        '    expect(run("")).toBe("received: ");\n' +
+        "  });\n" +
+        "});\n" },
+      { path: ".gitignore", content: "node_modules/\ndist/\n*.log\n" },
+      { path: "README.md", content:
+        "# " + name + "\n\n" + desc + "\n\n## Run\n\nnpm install\nnpm run build\nnode dist/index.js \"hello\"\n" }
+    ];
+  }
+
+  function pyStarter(slug, name, desc) {
+    return [
+      { path: "pyproject.toml", content:
+        "[project]\n" +
+        "name = \"" + slug + "\"\n" +
+        "version = \"0.1.0\"\n" +
+        "description = \"" + desc + "\"\n" +
+        "requires-python = \">=3.12\"\n" +
+        "dependencies = [\"typer>=0.12\"]\n" +
+        "\n" +
+        "[project.scripts]\n" +
+        slug + " = \"src.main:cli\"\n" +
+        "\n" +
+        "[tool.pytest.ini_options]\n" +
+        "addopts = \"-q\"\n" +
+        "\n" +
+        "[tool.ruff]\n" +
+        "line-length = 100\n" },
+      { path: "src/__init__.py", content: "" },
+      { path: "src/main.py", content:
+        '"""Entry point — Typer CLI over the deterministic core."""\n' +
+        "\n" +
+        "from src.core import run\n" +
+        "\n" +
+        "def cli():\n" +
+        "    import typer\n" +
+        "\n" +
+        "    app = typer.Typer()\n" +
+        "\n" +
+        "    @app.command()\n" +
+        "    def go(input_text: str):\n" +
+        '        """Run the pipeline over INPUT_TEXT."""\n' +
+        "        typer.echo(run(input_text))\n" +
+        "\n" +
+        "    app()\n" +
+        "\n" +
+        "if __name__ == \"__main__\":\n" +
+        "    cli()\n" },
+      { path: "src/core.py", content:
+        '"""Pure, deterministic core — no side effects, no external AI calls."""\n' +
+        "\n" +
+        "def run(input_text: str) -> str:\n" +
+        '    return "received: " + input_text\n' },
+      { path: "tests/test_core.py", content:
+        "from src.core import run\n" +
+        "\n" +
+        "def test_empty():\n" +
+        '    assert run("") == "received: "\n' },
+      { path: ".gitignore", content: "__pycache__/\n.venv/\n*.pyc\n" },
+      { path: "README.md", content:
+        "# " + name + "\n\n" + desc + "\n\n## Run\n\nuv sync\nuv run " + slug + " \"hello\"\n" }
+    ];
+  }
+
+  function goStarter(slug, name, desc) {
+    return [
+      { path: "go.mod", content: "module " + slug + "\n\ngo 1.22\n" },
+      { path: "main.go", content:
+        "package main\n" +
+        "\n" +
+        "import (\n" +
+        "  \"fmt\"\n" +
+        "  \"os\"\n" +
+        "  \"strings\"\n" +
+        "  \"" + slug + "/core\"\n" +
+        ")\n" +
+        "\n" +
+        "func main() {\n" +
+        "  input := strings.Join(os.Args[1:], \" \")\n" +
+        "  fmt.Println(core.Run(input))\n" +
+        "}\n" },
+      { path: "core/core.go", content:
+        "package core\n" +
+        "\n" +
+        "// Run is the pure, deterministic core.\n" +
+        "func Run(input string) string {\n" +
+        "  return \"received: \" + input\n" +
+        "}\n" },
+      { path: "core/core_test.go", content:
+        "package core\n" +
+        "\n" +
+        "import \"testing\"\n" +
+        "\n" +
+        "func TestRunEmpty(t *testing.T) {\n" +
+        "  if got := Run(\"\"); got != \"received: \" {\n" +
+        '    t.Fatalf("Run() = %q, want %q", got, "received: ")\n' +
+        "  }\n" +
+        "}\n" },
+      { path: ".gitignore", content: "bin/\n*.exe\n" },
+      { path: "README.md", content:
+        "# " + name + "\n\n" + desc + "\n\n## Run\n\ngo run . \"hello\"\n" }
+    ];
+  }
+
+  function rustStarter(slug, name, desc) {
+    return [
+      { path: "Cargo.toml", content:
+        "[package]\n" +
+        "name = \"" + slug + "\"\n" +
+        "version = \"0.1.0\"\n" +
+        "edition = \"2021\"\n" +
+        "\n" +
+        "[dependencies]\n" },
+      { path: "src/main.rs", content:
+        "mod core;\n" +
+        "\n" +
+        "fn main() {\n" +
+        "  let input: Vec<String> = std::env::args().skip(1).collect();\n" +
+        "  println!(\"{}\", core::run(&input.join(\" \")));\n" +
+        "}\n" },
+      { path: "src/core.rs", content:
+        "// Pure, deterministic core — no side effects, no external AI calls.\n" +
+        "pub fn run(input: &str) -> String {\n" +
+        "  format!(\"received: {input}\")\n" +
+        "}\n" +
+        "\n" +
+        "#[cfg(test)]\n" +
+        "mod tests {\n" +
+        "  use super::*;\n" +
+        "\n" +
+        "  #[test]\n" +
+        "  fn run_empty() {\n" +
+        "    assert_eq!(run(\"\"), \"received: \");\n" +
+        "  }\n" +
+        "}\n" },
+      { path: ".gitignore", content: "/target\n" },
+      { path: "README.md", content:
+        "# " + name + "\n\n" + desc + "\n\n## Run\n\ncargo run -- \"hello\"\n" }
+    ];
+  }
+
+  // ------------------------------------------------------------------------
+  // Scaffold download — minimal ZIP (store-only, no dependencies)
+  // ------------------------------------------------------------------------
+  var CRC_TABLE = null;
+
+  function crc32(bytes) {
+    if (!CRC_TABLE) {
+      CRC_TABLE = new Int32Array(256);
+      for (var n = 0; n < 256; n++) {
+        var c = n;
+        for (var k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+        CRC_TABLE[n] = c;
+      }
+    }
+    var crc = -1;
+    for (var i = 0; i < bytes.length; i++) {
+      crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ bytes[i]) & 0xff];
+    }
+    return (crc ^ -1) >>> 0;
+  }
+
+  function buildZip(files) {
+    var enc = new TextEncoder();
+    var localChunks = [];
+    var central = [];
+    var offset = 0;
+    var DOS_TIME = 0;
+    var DOS_DATE = 0x5821; // 2024-01-01 00:00 — fixed, so downloads are reproducible.
+
+    files.forEach(function (f) {
+      var nameBytes = enc.encode(f.path);
+      var dataBytes = enc.encode(f.content);
+      var crc = crc32(dataBytes);
+      var local = new Uint8Array(30 + nameBytes.length + dataBytes.length);
+      var v = new DataView(local.buffer);
+      v.setUint32(0, 0x04034b50, true);
+      v.setUint16(4, 20, true);
+      v.setUint16(6, 0x0800, true); // UTF-8 filename flag
+      v.setUint16(8, 0, true);      // store (no compression)
+      v.setUint16(10, DOS_TIME, true);
+      v.setUint16(12, DOS_DATE, true);
+      v.setUint32(14, crc, true);
+      v.setUint32(18, dataBytes.length, true);
+      v.setUint32(22, dataBytes.length, true);
+      v.setUint16(26, nameBytes.length, true);
+      v.setUint16(28, 0, true);
+      local.set(nameBytes, 30);
+      local.set(dataBytes, 30 + nameBytes.length);
+      localChunks.push(local);
+      central.push({ nameBytes: nameBytes, crc: crc, size: dataBytes.length, offset: offset });
+      offset += local.length;
+    });
+
+    var centralChunks = [];
+    var centralStart = offset;
+    central.forEach(function (c, i) {
+      var hdr = new Uint8Array(46 + c.nameBytes.length);
+      var v = new DataView(hdr.buffer);
+      v.setUint32(0, 0x02014b50, true);
+      v.setUint16(4, 20, true);
+      v.setUint16(6, 20, true);
+      v.setUint16(8, 0x0800, true);
+      v.setUint16(10, 0, true);
+      v.setUint16(12, DOS_TIME, true);
+      v.setUint16(14, DOS_DATE, true);
+      v.setUint32(16, c.crc, true);
+      v.setUint32(20, c.size, true);
+      v.setUint32(24, c.size, true);
+      v.setUint16(28, c.nameBytes.length, true);
+      v.setUint16(30, 0, true);
+      v.setUint16(32, 0, true);
+      v.setUint16(34, 0, true);
+      v.setUint16(36, 0, true);
+      v.setUint32(38, 0, true);
+      v.setUint32(42, c.offset, true);
+      hdr.set(c.nameBytes, 46);
+      centralChunks.push(hdr);
+    });
+
+    var centralSize = centralChunks.reduce(function (s, c) { return s + c.length; }, 0);
+    var eocd = new Uint8Array(22);
+    var ev = new DataView(eocd.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(4, 0, true);
+    ev.setUint16(6, 0, true);
+    ev.setUint16(8, files.length, true);
+    ev.setUint16(10, files.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, centralStart, true);
+    ev.setUint16(20, 0, true);
+
+    var total = centralStart + centralSize + eocd.length;
+    var out = new Uint8Array(total);
+    var pos = 0;
+    localChunks.forEach(function (c) { out.set(c, pos); pos += c.length; });
+    centralChunks.forEach(function (c) { out.set(c, pos); pos += c.length; });
+    out.set(eocd, pos);
+    return out;
+  }
+
+  function downloadZip(files, name) {
+    var blob = new Blob([buildZip(files)], { type: "application/zip" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
   function taskAgentText(ctx) {
     var lines = [];
     lines.push("AO READY TASK PROMPT");
@@ -435,6 +997,8 @@
     lines.push("");
     lines.push("Context");
     lines.push("- GitHub: " + ctx.githubFirstLine);
+    lines.push("- Feasibility: " + ctx.feasLine);
+    lines.push("- Builder: " + ctx.builderLine);
     lines.push("- Stack: " + ctx.stackLabel);
     lines.push("- Architecture: " + ctx.architectureFirstLine);
     lines.push("- Research: " + ctx.researchFirstLine);
@@ -442,10 +1006,11 @@
     lines.push("");
     lines.push("Instructions");
     lines.push("1. Start with a short implementation plan before editing.");
-    lines.push("2. Keep logic deterministic — no external AI calls.");
-    lines.push("3. Structure the code as a pure core with thin adapters.");
-    lines.push("4. Add a unit test for every module.");
-    lines.push("5. Implement, verify locally, commit, and open a PR.");
+    lines.push("2. Scaffold the project from the provided starter files.");
+    lines.push("3. Keep logic deterministic — no external AI calls.");
+    lines.push("4. Structure the code as a pure core with thin adapters.");
+    lines.push("5. Add a unit test for every module.");
+    lines.push("6. Implement, verify locally, commit, and open a PR.");
     return lines.join("\n");
   }
 
@@ -529,7 +1094,7 @@
   }
 
   function renderPromptCard(text) {
-    var card = addOutputCard(5, "AO Task Agent", "", { agent: "task" });
+    var card = addOutputCard(7, "AO Task Agent", "", { agent: "task" });
     var body = $(".card-body", card);
 
     var wrap = document.createElement("div");
@@ -551,6 +1116,66 @@
     wrap.appendChild(ta);
     wrap.appendChild(btn);
     body.appendChild(wrap);
+  }
+
+  // Feasibility card: score meter + verdict badge, then the full text.
+  function renderFeasibilityCard(feas) {
+    var card = addOutputCard(3, "Feasibility Agent", "", { agent: "feasibility", copyText: feas.text });
+    var body = $(".card-body", card);
+
+    var meter = document.createElement("div");
+    meter.className = "feas-meter";
+
+    var scoreEl = document.createElement("div");
+    scoreEl.className = "feas-score";
+    scoreEl.innerHTML =
+      '<span class="feas-score-num">' + esc(feas.score) + "</span>" +
+      '<span class="feas-score-max">/100</span>';
+
+    var track = document.createElement("div");
+    track.className = "feas-track";
+    track.setAttribute("aria-hidden", "true");
+    var fill = document.createElement("div");
+    fill.className = "feas-fill";
+    fill.style.width = Math.max(0, Math.min(100, feas.score)) + "%";
+    track.appendChild(fill);
+
+    var verdictEl = document.createElement("div");
+    verdictEl.className = "feas-verdict feas-verdict--" + esc(feas.verdictClass || "good");
+    verdictEl.textContent = feas.verdict;
+
+    meter.appendChild(scoreEl);
+    meter.appendChild(track);
+    meter.appendChild(verdictEl);
+
+    var pre = document.createElement("pre");
+    pre.textContent = feas.text;
+
+    body.appendChild(meter);
+    body.appendChild(pre);
+    return card;
+  }
+
+  // Builder card: full plan text + a scaffold (.zip) download action.
+  function renderBuilderCard(builder) {
+    var card = addOutputCard(6, "Builder Agent", "", { agent: "builder", copyText: builder.text });
+    var headActions = $(".card-head-actions", card);
+
+    var dl = document.createElement("button");
+    dl.type = "button";
+    dl.className = "card-download";
+    dl.textContent = "Download scaffold (.zip)";
+    dl.addEventListener("click", function () {
+      downloadZip(builder.files, builder.folder + ".zip");
+      toast("Scaffold downloaded.");
+    });
+    headActions.appendChild(dl);
+
+    var body = $(".card-body", card);
+    var pre = document.createElement("pre");
+    pre.textContent = builder.text;
+    body.appendChild(pre);
+    return card;
   }
 
   function copyText(text, btn) {
@@ -603,6 +1228,9 @@
     L.push("");
     L.push("- **Idea:** " + (record.idea || "—"));
     L.push("- **Stack:** " + (STACKS[record.stack] || STACKS.unsure).label);
+    L.push("- **Type:** " + ((PROJECT_TYPES[record.type] || record.type || "—")));
+    L.push("- **Team:** " + ((TEAM_SIZES[record.team] || record.team || "—")));
+    L.push("- **Audience:** " + (record.audience || "—"));
     L.push("- **GitHub:** " + (record.github || "—"));
     L.push("- **Deadline:** " + (record.deadline || "—"));
     L.push("- **Comfort:** " + (record.comfort || "—"));
@@ -612,11 +1240,14 @@
       var agents = [
         ["1. GitHub Agent", record.outputs.github.text],
         ["2. Research Agent", record.outputs.research],
-        ["3. Architecture Agent", record.outputs.architecture],
-        ["4. Tech Stack Agent", record.outputs.stack],
-        ["5. AO Task Agent", record.outputs.prompt || record.prompt]
+        ["3. Feasibility Agent", record.outputs.feasibility ? record.outputs.feasibility.text : ""],
+        ["4. Architecture Agent", record.outputs.architecture],
+        ["5. Tech Stack Agent", record.outputs.stack],
+        ["6. Builder Agent", record.outputs.builder ? record.outputs.builder.text : ""],
+        ["7. AO Task Agent", record.outputs.prompt || record.prompt]
       ];
       agents.forEach(function (a) {
+        if (!a[1]) return;
         L.push("## " + a[0]);
         L.push("");
         L.push("```text");
@@ -741,6 +1372,9 @@
     $("#f-idea").value = item.idea || "";
     $("#f-deadline").value = item.deadline || "";
     $("#f-comfort").value = item.comfort || "beginner";
+    $("#f-type").value = item.type || "tool";
+    $("#f-team").value = item.team || "solo";
+    $("#f-audience").value = item.audience || "";
   }
 
   function readForm() {
@@ -750,7 +1384,10 @@
       github: $("#f-github").value.trim(),
       idea: $("#f-idea").value.trim(),
       deadline: $("#f-deadline").value.trim(),
-      comfort: $("#f-comfort").value
+      comfort: $("#f-comfort").value,
+      type: $("#f-type").value,
+      team: $("#f-team").value,
+      audience: $("#f-audience").value.trim()
     };
   }
 
@@ -777,14 +1414,22 @@
       agent: "research",
       copyText: saved.research
     });
-    addOutputCard(3, "Architecture Agent", "<pre>" + esc(saved.architecture) + "</pre>", {
+    // Feasibility + Builder are deterministic, so they can be re-derived from
+    // the saved inputs even when a project predates this upgrade.
+    var feas = saved.feasibility
+      ? { score: saved.feasibility.score, verdict: saved.feasibility.verdict, verdictClass: saved.feasibility.verdictClass || "good", text: saved.feasibility.text }
+      : feasibilityAgent(item);
+    renderFeasibilityCard(feas);
+    addOutputCard(4, "Architecture Agent", "<pre>" + esc(saved.architecture) + "</pre>", {
       agent: "architecture",
       copyText: saved.architecture
     });
-    addOutputCard(4, "Tech Stack Agent", "<pre>" + esc(saved.stack) + "</pre>", {
+    addOutputCard(5, "Tech Stack Agent", "<pre>" + esc(saved.stack) + "</pre>", {
       agent: "stack",
       copyText: saved.stack
     });
+    var builder = saved.builder || builderAgent(item, feas);
+    renderBuilderCard(builder);
     renderPromptCard(prompt);
     STEP_ORDER.forEach(function (step) { setStepState(step, "done"); });
     setPipelineState("complete");
@@ -815,6 +1460,9 @@
     $("#f-idea").value = draft.idea || "";
     $("#f-deadline").value = draft.deadline || "";
     $("#f-comfort").value = draft.comfort || "beginner";
+    $("#f-type").value = draft.type || "tool";
+    $("#f-team").value = draft.team || "solo";
+    $("#f-audience").value = draft.audience || "";
   }
 
   form.addEventListener("input", debounce(writeDraft, 350));
@@ -829,6 +1477,9 @@
     $("#f-idea").value = "A CLI that turns meeting notes into action items, with a simple web dashboard.";
     $("#f-deadline").value = "4 weeks";
     $("#f-comfort").value = "intermediate";
+    $("#f-type").value = "tool";
+    $("#f-team").value = "solo";
+    $("#f-audience").value = "busy engineers who take a lot of meeting notes";
     writeDraft();
     toast("Example loaded — press Run pipeline (or Ctrl+Enter).");
     $("#f-idea").focus();
@@ -877,29 +1528,45 @@
     });
     setStepState("research", "done");
 
-    // 3 — Architecture Agent
+    // 3 — Feasibility Agent
+    setStepState("feasibility", "running");
+    setStatus("running", "feasibility agent…");
+    await sleep(800);
+    var feas = feasibilityAgent(input);
+    renderFeasibilityCard(feas);
+    setStepState("feasibility", "done");
+
+    // 4 — Architecture Agent
     setStepState("architecture", "running");
     setStatus("running", "architecture agent…");
     await sleep(900);
     var archText = architectureAgentText(input);
-    addOutputCard(3, "Architecture Agent", "<pre>" + esc(archText) + "</pre>", {
+    addOutputCard(4, "Architecture Agent", "<pre>" + esc(archText) + "</pre>", {
       agent: "architecture",
       copyText: archText
     });
     setStepState("architecture", "done");
 
-    // 4 — Tech Stack Agent
+    // 5 — Tech Stack Agent
     setStepState("stack", "running");
     setStatus("running", "tech stack agent…");
     await sleep(800);
     var stackText = stackAgentText(input);
-    addOutputCard(4, "Tech Stack Agent", "<pre>" + esc(stackText) + "</pre>", {
+    addOutputCard(5, "Tech Stack Agent", "<pre>" + esc(stackText) + "</pre>", {
       agent: "stack",
       copyText: stackText
     });
     setStepState("stack", "done");
 
-    // 5 — AO Task Agent (assembles the copyable prompt)
+    // 6 — Builder Agent (starter scaffold + milestone plan)
+    setStepState("builder", "running");
+    setStatus("running", "builder agent…");
+    await sleep(900);
+    var builder = builderAgent(input, feas);
+    renderBuilderCard(builder);
+    setStepState("builder", "done");
+
+    // 7 — AO Task Agent (assembles the copyable prompt)
     setStepState("task", "running");
     setStatus("running", "assembling AO task…");
     await sleep(800);
@@ -909,6 +1576,8 @@
       deadline: input.deadline,
       comfort: input.comfort,
       githubFirstLine: ghText.split("\n")[0],
+      feasLine: feas.score + "/100 — " + feas.verdict,
+      builderLine: builder.files.length + " files · " + countDirs(builder.files) + " dirs — download the scaffold (.zip)",
       stackLabel: (STACKS[input.stack] || STACKS.unsure).label,
       architectureFirstLine: archText.split("\n")[0],
       researchFirstLine: researchText.split("\n")[0]
@@ -929,12 +1598,17 @@
         idea: input.idea,
         deadline: input.deadline,
         comfort: input.comfort,
+        type: input.type,
+        team: input.team,
+        audience: input.audience,
         time: new Date().toLocaleString(),
         outputs: {
           github: { text: ghText, badge: ghBadge },
           research: researchText,
+          feasibility: { score: feas.score, verdict: feas.verdict, verdictClass: feas.verdictClass, text: feas.text },
           architecture: archText,
           stack: stackText,
+          builder: { text: builder.text, folder: builder.folder, files: builder.files },
           prompt: promptText
         },
         prompt: promptText

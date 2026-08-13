@@ -15,7 +15,7 @@ step, no dependencies, no framework. Keep it that way.
 2. Make your change in the relevant file:
    - `index.html` — page structure / markup
    - `styles.css` — design system / styling
-   - `script.js` — behavior (agents, pipeline, history, clipboard)
+   - `script.js` — behavior (agents, pipeline, history, clipboard, scaffold)
 
 ## Ground rules
 
@@ -33,6 +33,8 @@ step, no dependencies, no framework. Keep it that way.
 - Open the page and run the pipeline end to end (submit a project idea).
 - Confirm the GitHub Agent falls back to "sample data" when offline, and that the
   **Copy prompt** button works.
+- Confirm the **Download scaffold (.zip)** button produces a zip you can open, and that
+  the Feasibility Agent's score/verdict update with the form inputs.
 - If you changed JS, verify the file parses, e.g. `node --check script.js`.
 
 ## Submitting a PR
