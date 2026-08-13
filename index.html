@@ -18,8 +18,27 @@
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Apply the stored/system theme before first paint to avoid a light flash
+       for dark-mode users. Mirrors the logic in script.js (initTheme). -->
+  <script>
+    (function () {
+      var key = "abridgeai.theme.v1";
+      var stored = null;
+      try { stored = localStorage.getItem(key); } catch (e) { /* ignore */ }
+      var dark = stored
+        ? stored === "dark"
+        : !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    })();
+  </script>
 </head>
 <body>
+  <noscript>
+    <div class="noscript" role="alert">
+      AbridgeAI needs JavaScript to run the agent pipeline. Please enable JavaScript and reload the page.
+    </div>
+  </noscript>
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="app">
 

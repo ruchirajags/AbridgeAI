@@ -49,7 +49,8 @@
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function sleep(ms) {
@@ -675,12 +676,22 @@
     items.forEach(function (item) {
       var li = document.createElement("li");
       li.className = "history-item" + (item.id === activeId ? " is-active" : "");
+      // Keyboard-accessible: focusable and activatable with Enter / Space.
+      li.tabIndex = 0;
+      li.setAttribute("aria-label", "Open project " + esc(item.name || item.idea || "untitled"));
       li.innerHTML =
         '<p class="history-item-title">' + esc(item.name || item.idea || "Untitled") + "</p>" +
         '<div class="history-item-meta">' + esc(item.time || "") + "</div>" +
         '<button type="button" class="history-item-del" aria-label="Delete ' + esc(item.name || item.idea || "project") + '">×</button>';
       li.addEventListener("click", function () {
         loadProject(item);
+      });
+      li.addEventListener("keydown", function (e) {
+        if (e.target !== li) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          loadProject(item);
+        }
       });
       var del = li.querySelector(".history-item-del");
       del.addEventListener("click", function (e) {
@@ -833,6 +844,8 @@
     formHint.textContent = "";
     outputsEl.innerHTML = "";
     outputsPanel.hidden = true;
+    // No brief to export while a fresh run is in progress.
+    currentProject = null;
     updateExportBtn();
 
     resetSteps();
