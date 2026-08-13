@@ -1,4 +1,5 @@
 # AbridgeAI — Agent Workspace
+*Built for the Agent Orchestrator, Orchestra Hackathon.*
 
 A static, client-side workspace that turns a project idea into a **feasibility plan, a
 starter scaffold, and an AO-ready task prompt**. No build step, no backend, no external
@@ -129,10 +130,9 @@ Dark theme switches the palette while keeping the same identity.
 - Everything persists in `localStorage` under `abridgeai.*` keys (history, draft, theme);
   clearing browser data for the site resets it.
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to run, test, and submit changes.
+## Team Members
+- [Suzanne Daniel Thomas](https://github.com/suzannet-menon)
+- [Ruchira Rajesh Jagshettiwar](https://github.com/ruchirajags)
 
 ## License
-
 Licensed under the [Apache License, Version 2.0](LICENSE).
