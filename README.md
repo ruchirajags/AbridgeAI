@@ -93,6 +93,10 @@ abridgeai/
 └── README.md
 ```
 
+## OutputRepo(where AO raised a PR for the problem statement in the repo): https://github.com/ruchirajags/AO-DUMMY.git
+
+## Demo Video: https://youtu.be/AJ6Sbk-3UQU
+
 ## Layout
 
 - **Left rail** — project history (populates after runs; click to re-open a saved brief,
