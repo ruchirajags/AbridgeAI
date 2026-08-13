@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AbridgeAI — Long content. Sharp summaries.</title>
+  <meta name="description" content="AbridgeAI turns long articles, documents, meeting notes and research into clear, accurate summaries — in seconds, in your browser.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="AbridgeAI home">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 7h10M4 12h7M4 17h4"/>
+            <rect x="15" y="9" width="5" height="6" rx="1"/>
+          </svg>
+        </span>
+        Abridge<span style="color:var(--brand-500)">AI</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <ul class="nav-links">
+          <li><a href="index.html" aria-current="page">Home</a></li>
+          <li><a href="demo.html">Live demo</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn btn-secondary" href="demo.html">Try the demo</a>
+        <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="eyebrow">✦ AI-powered abridgement</span>
+          <h1>Long content.<br><span class="grad">Sharp summaries.</span></h1>
+          <p class="hero-sub">
+            AbridgeAI condenses articles, documents, meeting notes and research into
+            clear, accurate summaries — in seconds. No accounts, no setup, and it runs
+            right in your browser.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="demo.html">
+              Try the live demo
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
+            </a>
+            <a class="btn btn-secondary btn-lg" href="#how">See how it works</a>
+          </div>
+          <div class="hero-proof">
+            <div><strong>70% less</strong> reading time</div>
+            <div><strong>40+</strong> languages supported</div>
+            <div><strong>100%</strong> private by design</div>
+          </div>
+        </div>
+
+        <div class="app-window" aria-hidden="true">
+          <div class="app-window-bar">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <div class="app-window-body">
+            <div class="mock-panel in">
+              <div class="mock-label">Original — 2,400 words</div>
+              <div class="mock-line w85"></div>
+              <div class="mock-line w70"></div>
+              <div class="mock-line w60"></div>
+              <div class="mock-line w85"></div>
+              <div class="mock-line w50"></div>
+              <div class="mock-line w70"></div>
+            </div>
+            <div class="mock-panel out">
+              <div class="mock-label">Abridged — 480 words</div>
+              <div class="mock-line w70"></div>
+              <div class="mock-line w50"></div>
+              <div class="mock-line w60"></div>
+              <div class="mock-stats">
+                <span class="mock-stat">−80% words</span>
+                <span class="mock-stat">⚡ 1.2s</span>
+                <span class="mock-stat">✓ key points</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats-bar" aria-label="Product statistics">
+      <div class="container stats-grid">
+        <div>
+          <div class="stat-num"><span class="grad">1.2M+</span></div>
+          <div class="stat-label">documents abridged</div>
+        </div>
+        <div>
+          <div class="stat-num"><span class="grad">−72%</span></div>
+          <div class="stat-label">average reading time</div>
+        </div>
+        <div>
+          <div class="stat-num"><span class="grad">40+</span></div>
+          <div class="stat-label">languages</div>
+        </div>
+        <div>
+          <div class="stat-num"><span class="grad">0</span></div>
+          <div class="stat-label">data ever leaves your device</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Features</span>
+          <h2>Everything you need to cut through the noise</h2>
+          <p>From a long article to a bullet-point brief, AbridgeAI gives you the essence without the filler.</p>
+        </div>
+        <div class="features-grid">
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            </div>
+            <h3>Instant abridgement</h3>
+            <p>Paste, click, done. A clear summary in under two seconds — long enough to be useful, short enough to read on a coffee break.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <h3>Key takeaways</h3>
+            <p>Get the three most important points up front, so you always know the bottom line before you commit to reading the rest.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            </div>
+            <h3>Bullets or prose</h3>
+            <p>Summaries in flowing paragraphs or scannable bullet points — whichever fits your workflow, your notes, or your inbox.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </div>
+            <h3>Copy &amp; share</h3>
+            <p>One click copies your summary, or download it as a plain-text file. Take it to your notes app, doc, or team chat.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3>Private by design</h3>
+            <p>Abridgement happens on your device. Your document never leaves your browser — nothing is uploaded, stored, or tracked.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <h3>Multi-language</h3>
+            <p>Summarize English, Spanish, French, German, Hindi, Tamil and 35+ more languages with the same instant result.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section section-soft" id="how">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">How it works</span>
+          <h2>Three steps to the bottom line</h2>
+          <p>No sign-up, no training, no configuration. Just paste and go.</p>
+        </div>
+        <div class="steps-grid">
+          <div class="step">
+            <h3>Paste your content</h3>
+            <p>Drop in an article, report, transcript or research paper — as little as a paragraph or as long as tens of thousands of words.</p>
+          </div>
+          <div class="step">
+            <h3>Choose your summary</h3>
+            <p>Pick a length (short, medium, long), a format (bullets or prose), and whether you want key takeaways included.</p>
+          </div>
+          <div class="step">
+            <h3>Copy &amp; move on</h3>
+            <p>AbridgeAI instantly distills the essence. Copy it, download it, and get back to what actually matters.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Spotlight: output formats -->
+    <section class="section">
+      <div class="container split">
+        <div>
+          <span class="eyebrow">Flexible output</span>
+          <h2>One source, many formats</h2>
+          <p>
+            The same document can become a one-line brief, a five-bullet summary, or a
+            medium-length digest with key takeaways. Choose what your moment needs.
+          </p>
+          <ul class="split-check">
+            <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Short, medium or long summaries</li>
+            <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Paragraph or bullet-point output</li>
+            <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Optional “key takeaways” section</li>
+            <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Word, character and reduction stats</li>
+          </ul>
+        </div>
+        <div class="split-visual">
+          <div class="format-demo" aria-hidden="true">
+            <div class="format-chip">
+              <div class="chip-head">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                Bullet brief
+              </div>
+              <p>• Distributed teams outperform when communication is written and trust-based.</p>
+              <p>• Culture building must become an intentional practice in remote settings.</p>
+              <span class="tag">5 bullets</span>
+            </div>
+            <div class="format-chip">
+              <div class="chip-head">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                Key takeaways
+              </div>
+              <p>1. Remote work is now a deliberate strategy, not an emergency.</p>
+              <p>2. Success depends on norms, documentation and outcome-based metrics.</p>
+              <span class="tag">3 key points</span>
+            </div>
+            <div class="format-chip">
+              <div class="chip-head">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+                Prose digest
+              </div>
+              <p>Remote work has evolved from crisis response into a long-term strategy, with trust-based teams proving as productive as office teams.</p>
+              <span class="tag">medium</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo strip -->
+    <section class="section section-soft">
+      <div class="container">
+        <div class="demo-strip">
+          <div>
+            <h2>See it work — paste anything</h2>
+            <p>
+              Grab any long paragraph from an article or report and try the live demo.
+              It runs fully in your browser, so nothing you paste ever leaves your device.
+            </p>
+          </div>
+          <div>
+            <a class="btn btn-white btn-lg" href="demo.html">
+              Open the live demo
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Loved by readers</span>
+          <h2>From inbox overload to under control</h2>
+        </div>
+        <div class="testimonials-grid">
+          <div class="testimonial">
+            <div class="stars">★★★★★</div>
+            <blockquote>“I summarize every newsletter before I decide what to read. My inbox finally feels survivable.”</blockquote>
+            <div class="person">
+              <span class="avatar">MR</span>
+              <div><div class="name">Meera R.</div><div class="role">Product designer</div></div>
+            </div>
+          </div>
+          <div class="testimonial">
+            <div class="stars">★★★★★</div>
+            <blockquote>“Meeting notes in, clean action items out. It saves my team an hour a week, easily.”</blockquote>
+            <div class="person">
+              <span class="avatar">DK</span>
+              <div><div class="name">David K.</div><div class="role">Engineering lead</div></div>
+            </div>
+          </div>
+          <div class="testimonial">
+            <div class="stars">★★★★★</div>
+            <blockquote>“The fact that it works offline and never uploads my research is why I use it daily.”</blockquote>
+            <div class="person">
+              <span class="avatar">AJ</span>
+              <div><div class="name">Aisha J.</div><div class="role">Graduate researcher</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing teaser -->
+    <section class="section section-soft" id="pricing">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Pricing</span>
+          <h2>Simple plans, honest value</h2>
+          <p>Start free. Upgrade when you want longer documents and priority processing.</p>
+        </div>
+        <div class="pricing-grid">
+          <div class="price-card">
+            <h3>Free</h3>
+            <div class="price">$0<span> / forever</span></div>
+            <p class="price-desc">For casual readers and quick digests.</p>
+            <ul class="price-features">
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Unlimited summaries up to 5,000 words</li>
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Bullets &amp; paragraph formats</li>
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Key takeaways</li>
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Copy &amp; download</li>
+            </ul>
+            <a class="btn btn-secondary" href="demo.html">Start free</a>
+          </div>
+          <div class="price-card featured">
+            <span class="popular">Most popular</span>
+            <h3>Pro</h3>
+            <div class="price">$6<span> / month</span></div>
+            <p class="price-desc">For professionals who read all day.</p>
+            <ul class="price-features">
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Documents up to 200,000 words</li>
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Custom summary lengths &amp; tone</li>
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>History &amp; saved summaries</li>
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>PDF &amp; DOCX export</li>
+            </ul>
+            <a class="btn btn-primary" href="demo.html">Try Pro free for 14 days</a>
+          </div>
+          <div class="price-card">
+            <h3>Team</h3>
+            <div class="price">$24<span> / month</span></div>
+            <p class="price-desc">For teams sharing digests and briefs.</p>
+            <ul class="price-features">
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Everything in Pro</li>
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>5 seats included</li>
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Shared workspace &amp; templates</li>
+              <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Priority support</li>
+            </ul>
+            <a class="btn btn-secondary" href="pricing.html">See full plans</a>
+          </div>
+        </div>
+        <p class="pricing-note">All plans are private by design — your content is never stored on our servers.</p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">FAQ</span>
+          <h2>Questions, answered</h2>
+        </div>
+        <div class="faq-list">
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">Is my content sent to a server?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
+            <div class="faq-a"><div class="faq-a-inner">No. The MVP summarizer runs entirely in your browser using a lightweight extractive algorithm. Your text never leaves your device, which makes it ideal for sensitive documents.</div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">What kinds of text can I summarize?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
+            <div class="faq-a"><div class="faq-a-inner">Articles, essays, reports, meeting notes, research abstracts, emails, news — any written content. Paste plain text and choose your output format.</div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">How accurate is the abridgement?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
+            <div class="faq-a"><div class="faq-a-inner">This MVP uses extractive summarization, which selects the most information-dense sentences from the source. That guarantees factual accuracy — every word comes straight from your document. Generative (paraphrasing) summaries are on the roadmap for Pro.</div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">Which languages are supported?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
+            <div class="faq-a"><div class="faq-a-inner">The sentence-scoring approach works across most Latin-script and many other languages. The roadmap includes tuned language models for English, Spanish, French, German, Hindi, Tamil and more.</div></div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">Do I need an account to try it?<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
+            <div class="faq-a"><div class="faq-a-inner">No account needed. The live demo is free and open to anyone with a browser.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA band -->
+    <section class="section section-soft">
+      <div class="container">
+        <div class="cta-band">
+          <span class="eyebrow" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#c7d2fe;">Ready when you are</span>
+          <h2>Stop reading everything.<br>Start knowing everything.</h2>
+          <p>Turn the next long article, report or meeting transcript into a two-minute read.</p>
+          <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="demo.html">Try the live demo</a>
+            <a class="btn btn-dark btn-lg" href="about.html">Learn more</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="index.html">
+            <span class="brand-mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 7h10M4 12h7M4 17h4"/>
+                <rect x="15" y="9" width="5" height="6" rx="1"/>
+              </svg>
+            </span>
+            Abridge<span style="color:var(--brand-400)">AI</span>
+          </a>
+          <p>Long content, sharp summaries. Private, fast, and free to start.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <a href="demo.html">Live demo</a>
+          <a href="index.html#features">Features</a>
+          <a href="index.html#how">How it works</a>
+          <a href="pricing.html">Pricing</a>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <a href="about.html">About</a>
+          <a href="about.html#contact">Contact</a>
+          <a href="about.html#roadmap">Roadmap</a>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <a href="#">Privacy policy</a>
+          <a href="#">Terms of service</a>
+          <a href="#">License</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span data-year>2026</span> AbridgeAI. All rights reserved.</span>
+        <span>Licensed under the Apache License 2.0.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

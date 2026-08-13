@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — AbridgeAI</title>
+  <meta name="description" content="AbridgeAI's mission: give every reader back their time. Learn how the product works, what's on the roadmap, and how to reach us.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="AbridgeAI home">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 7h10M4 12h7M4 17h4"/>
+            <rect x="15" y="9" width="5" height="6" rx="1"/>
+          </svg>
+        </span>
+        Abridge<span style="color:var(--brand-500)">AI</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="demo.html">Live demo</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="about.html" aria-current="page">About</a></li>
+        </ul>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn btn-secondary" href="demo.html">Try the demo</a>
+        <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">About AbridgeAI</span>
+        <h1>Reading is precious. Don’t waste it.</h1>
+        <p>
+          We believe no one should drown in information. AbridgeAI distills long content
+          into its essence, so you can decide what deserves your full attention.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:1rem;">
+      <div class="container split">
+        <div>
+          <span class="eyebrow">Our mission</span>
+          <h2>Give readers their time back</h2>
+          <p>
+            Every day, people spend hours wading through newsletters, reports, meeting
+            transcripts and research that could have been summarized in minutes. AbridgeAI
+            started with a simple question: what if the summary came first?
+          </p>
+          <p>
+            The MVP you can try today is a private, in-browser abridgement engine. Paste
+            anything, and it selects the most information-dense sentences to produce a
+            faithful, readable summary — no uploads, no tracking, no account required.
+          </p>
+          <ul class="split-check">
+            <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Privacy is a feature, not a policy page</li>
+            <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Fast beats fancy — summaries in seconds</li>
+            <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Faithful output that never invents facts</li>
+          </ul>
+        </div>
+        <div class="split-visual">
+          <div class="card" style="padding:2rem;">
+            <h3 style="font-size:1.1rem;">How the MVP works</h3>
+            <p style="color:var(--ink-500);font-size:.95rem;margin-bottom:.5rem;">
+              <strong style="color:var(--ink-800);">1. Sentence scoring.</strong> Every sentence is
+              scored by how often its important keywords appear across the document.
+            </p>
+            <p style="color:var(--ink-500);font-size:.95rem;margin-bottom:.5rem;">
+              <strong style="color:var(--ink-800);">2. Position bias.</strong> Opening and closing
+              sentences get a small bonus because they usually carry the thesis.
+            </p>
+            <p style="color:var(--ink-500);font-size:.95rem;margin-bottom:.5rem;">
+              <strong style="color:var(--ink-800);">3. Selection.</strong> The top-scoring sentences
+              are kept in their original order to form a coherent summary.
+            </p>
+            <p style="color:var(--ink-500);font-size:.95rem;margin-bottom:0;">
+              <strong style="color:var(--ink-800);">4. In-browser.</strong> All of it runs locally —
+              nothing is sent to a server.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-soft" id="roadmap">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Roadmap</span>
+          <h2>What’s next</h2>
+          <p>This MVP is just the beginning. Here’s the direction we’re heading.</p>
+        </div>
+        <div class="features-grid">
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </div>
+            <h3>Generative summaries</h3>
+            <p>Paraphrased, tone-aware abridgements powered by local language models — still private, still fast.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            </div>
+            <h3>URL &amp; document import</h3>
+            <p>Summarize any article or PDF by link or upload — with the same in-browser privacy promise.</p>
+          </div>
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <h3>Meeting &amp; chat digests</h3>
+            <p>Paste any conversation and get action items, decisions and open questions in one view.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="contact">
+      <div class="container">
+        <div class="cta-band">
+          <span class="eyebrow" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#c7d2fe;">Contact</span>
+          <h2>Let’s talk</h2>
+          <p>
+            Questions, feedback, or partnerships? We’d love to hear from you.
+            Reach us at <a href="mailto:hello@abridgeai.example" style="color:#c7d2fe;font-weight:700;">hello@abridgeai.example</a>.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary btn-lg" href="demo.html">Try the live demo</a>
+            <a class="btn btn-dark btn-lg" href="pricing.html">See pricing</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="index.html">
+            <span class="brand-mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 7h10M4 12h7M4 17h4"/>
+                <rect x="15" y="9" width="5" height="6" rx="1"/>
+              </svg>
+            </span>
+            Abridge<span style="color:var(--brand-400)">AI</span>
+          </a>
+          <p>Long content, sharp summaries. Private, fast, and free to start.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <a href="demo.html">Live demo</a>
+          <a href="index.html#features">Features</a>
+          <a href="index.html#how">How it works</a>
+          <a href="pricing.html">Pricing</a>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <a href="about.html">About</a>
+          <a href="about.html#contact">Contact</a>
+          <a href="about.html#roadmap">Roadmap</a>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <a href="#">Privacy policy</a>
+          <a href="#">Terms of service</a>
+          <a href="#">License</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span data-year>2026</span> AbridgeAI. All rights reserved.</span>
+        <span>Licensed under the Apache License 2.0.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

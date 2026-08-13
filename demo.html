@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live demo — AbridgeAI</title>
+  <meta name="description" content="Try the AbridgeAI live demo. Paste any text and get an instant summary — fully in your browser, nothing leaves your device.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html" aria-label="AbridgeAI home">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 7h10M4 12h7M4 17h4"/>
+            <rect x="15" y="9" width="5" height="6" rx="1"/>
+          </svg>
+        </span>
+        Abridge<span style="color:var(--brand-500)">AI</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="demo.html" aria-current="page">Live demo</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn btn-secondary" href="demo.html">Try the demo</a>
+        <button class="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Live demo</span>
+        <h1>Paste it. Abridge it.</h1>
+        <p>
+          This MVP abridges text entirely in your browser — nothing you paste is
+          uploaded or stored. Start with the sample, or paste your own content.
+        </p>
+      </div>
+    </section>
+
+    <section class="section section-soft" style="padding-top:1.5rem;">
+      <div class="container">
+        <div class="demo-layout">
+          <!-- Input panel -->
+          <div class="panel">
+            <div class="panel-head">
+              <span class="title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                Your content
+              </span>
+              <span class="badge ready" id="demo-status">● Ready</span>
+            </div>
+            <div class="panel-body">
+              <label class="sr-only" for="input-text" style="position:absolute;left:-9999px;">Text to abridge</label>
+              <textarea id="input-text" class="input-text" placeholder="Paste an article, meeting notes, a report, or any long text here…"></textarea>
+
+              <div class="demo-options">
+                <div class="field">
+                  <label for="opt-length">Summary length</label>
+                  <select id="opt-length" class="select">
+                    <option value="short">Short (~15%)</option>
+                    <option value="medium" selected>Medium (~30%)</option>
+                    <option value="long">Long (~45%)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="opt-format">Format</label>
+                  <select id="opt-format" class="select">
+                    <option value="paragraph" selected>Paragraph</option>
+                    <option value="bullets">Bullet points</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="opt-points">Key takeaways</label>
+                  <select id="opt-points" class="select">
+                    <option value="0" selected>None</option>
+                    <option value="3">Top 3</option>
+                    <option value="5">Top 5</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="demo-actions">
+                <button class="btn btn-primary" id="btn-generate" type="button">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+                  Abridge it
+                </button>
+                <button class="btn btn-secondary" id="btn-sample" type="button">Load sample</button>
+                <button class="btn btn-secondary" id="btn-clear" type="button">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Output panel -->
+          <div class="panel">
+            <div class="panel-head">
+              <span class="title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                Abridged output
+              </span>
+              <span class="badge ready" id="output-status" style="display:none;">✓ Done</span>
+            </div>
+            <div class="panel-body">
+              <div class="output-area" id="output">
+                <div class="output-empty">Add some text and press “Abridge it” to see your summary here.</div>
+              </div>
+
+              <div class="demo-actions">
+                <button class="btn btn-secondary" id="btn-copy" type="button">Copy summary</button>
+                <button class="btn btn-secondary" id="btn-download" type="button">Download .txt</button>
+              </div>
+
+              <div class="stats-row">
+                <div class="stat-chip"><div class="k" id="stat-words">0 / 0</div><div class="v">summary / original words</div></div>
+                <div class="stat-chip"><div class="k" id="stat-chars">0 / 0</div><div class="v">summary / original characters</div></div>
+                <div class="stat-chip"><div class="k" id="stat-sentences">0 / 0</div><div class="v">sentences kept / total</div></div>
+                <div class="stat-chip"><div class="k grad" id="stat-reduction">0%</div><div class="v">content removed</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p style="text-align:center;color:var(--ink-500);font-size:.9rem;margin-top:2rem;">
+          How it works: a lightweight extractive algorithm scores every sentence by keyword frequency and position,
+          then keeps the most information-dense sentences. Every word in your summary comes straight from your source.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="index.html">
+            <span class="brand-mark">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 7h10M4 12h7M4 17h4"/>
+                <rect x="15" y="9" width="5" height="6" rx="1"/>
+              </svg>
+            </span>
+            Abridge<span style="color:var(--brand-400)">AI</span>
+          </a>
+          <p>Long content, sharp summaries. Private, fast, and free to start.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <a href="demo.html">Live demo</a>
+          <a href="index.html#features">Features</a>
+          <a href="index.html#how">How it works</a>
+          <a href="pricing.html">Pricing</a>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <a href="about.html">About</a>
+          <a href="about.html#contact">Contact</a>
+          <a href="about.html#roadmap">Roadmap</a>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <a href="#">Privacy policy</a>
+          <a href="#">Terms of service</a>
+          <a href="#">License</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span data-year>2026</span> AbridgeAI. All rights reserved.</span>
+        <span>Licensed under the Apache License 2.0.</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+  <script src="js/main.js"></script>
+  <script src="js/demo.js"></script>
+</body>
+</html>
