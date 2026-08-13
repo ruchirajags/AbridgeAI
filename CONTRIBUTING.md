@@ -19,6 +19,7 @@ step, no dependencies, no framework. Keep it that way.
 
 ## Ground rules
 
+
 - **No build step.** Don't add a bundler, framework, or `package.json` to render the site.
 - **Keep it deterministic.** The agent outputs are stable by design (input hashing +
   fixed knowledge pools). Don't introduce randomness or external AI calls into the

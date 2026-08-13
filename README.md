@@ -5,6 +5,7 @@ starter scaffold, and an AO-ready task prompt**. No build step, no backend, no e
 AI calls: every agent output is **deterministic** — the same inputs always produce the
 same outputs.
 
+
 ## Features
 
 - **Seven-agent pipeline** — GitHub → Research → Feasibility → Architecture → Tech Stack →
@@ -39,6 +40,10 @@ same outputs.
 - **Works everywhere** — plain HTML/CSS/JS. Open the file directly or serve the folder;
   no dependencies, no install.
 
+## ![AbridgeAI dashboard form](Abridge-kanman board.png)
+
+## ![AbridgeAI-Kanman Board](AbridgeAi-dashboard.png)
+
 ## How it works
 
 Fill in the form (name, preferred stack, GitHub username, project idea, deadline, comfort
@@ -66,6 +71,8 @@ Static files only — open `index.html` in any browser, or serve the folder:
 # any static server works, e.g.
 python -m http.server 8000
 # then open http://localhost:8000
+
+#If you changed JavaScript, first confirm the file parses: node --check script.js
 ```
 
 ## Project structure
@@ -93,9 +100,9 @@ abridgeai/
 └── README.md
 ```
 
-## OutputRepo(where AO raised a PR for the problem statement in the repo): https://github.com/ruchirajags/AO-DUMMY.git
+### OutputRepo(where AO raised a PR for the problem statement in the repo): https://github.com/ruchirajags/AO-DUMMY.git
 
-## Demo Video: https://youtu.be/AJ6Sbk-3UQU
+### Demo Video: https://youtu.be/AJ6Sbk-3UQU
 
 ## Layout
 
