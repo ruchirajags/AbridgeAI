@@ -1,15 +1,23 @@
 # AbridgeAI — Agent Workspace
 
-A static, client-side workspace that turns a project idea into an AO-ready task prompt.
-No build step, no backend, no external AI calls: every agent output is **deterministic** —
-the same inputs always produce the same outputs.
+A static, client-side workspace that turns a project idea into a **feasibility plan, a
+starter scaffold, and an AO-ready task prompt**. No build step, no backend, no external
+AI calls: every agent output is **deterministic** — the same inputs always produce the
+same outputs.
 
 ## Features
 
-- **Five-agent pipeline** — GitHub → Research → Architecture → Tech Stack → AO Task, run
-  in order and visualized live in the right-hand rail.
+- **Seven-agent pipeline** — GitHub → Research → Feasibility → Architecture → Tech Stack →
+  Builder → AO Task, run in order and visualized live in the right-hand rail.
 - **Deterministic by design** — inputs are hashed (djb2) and used to pick from fixed
   knowledge pools; there is no randomness anywhere in the pipeline.
+- **Feasibility planner** — a scored verdict (/100 across five axes), a GO / proceed /
+  rethink recommendation, an effort estimate with week ranges, a four-phase plan, and a
+  risk register with mitigations — all computed from the form inputs.
+- **Builder capability** — the Builder Agent generates a starter scaffold for the chosen
+  stack (file tree, starter files, milestone checklist with acceptance criteria) and a
+  **Download scaffold (.zip)** button produces a real, unzippable starter project that
+  includes a `PLAN.md` build plan.
 - **Live GitHub data with graceful fallback** — fetches the public GitHub profile + repos
   via the public GitHub API (client-side). Falls back to bundled sample data
   (`data/sample-github-analysis.json`) when the API is unreachable, rate-limited, CORS-blocked,
@@ -18,11 +26,12 @@ the same inputs always produce the same outputs.
   **Copy prompt** button writes it to the clipboard, and every agent card has its own
   **Copy** button.
 - **Export the full project brief** — one click downloads the entire brief (project
-  profile + all five agent outputs) as a Markdown file, ready to share or file.
+  profile + all seven agent outputs) as a Markdown file, ready to share or file.
 - **Project history with saved outputs** — completed runs (inputs *and* outputs) are saved
   to the left-hand rail (localStorage). Clicking an entry restores the form **and**
   re-opens the full saved brief without re-running; individual entries can be deleted and
-  history can be cleared.
+  history can be cleared. Projects saved before the Feasibility/Builder upgrade are
+  re-derived deterministically on open.
 - **Draft autosave** — the form persists automatically, so a refresh never loses an
   in-progress idea.
 - **Light & dark themes** — a toggle in the top bar; honors the stored choice and falls
@@ -32,14 +41,19 @@ the same inputs always produce the same outputs.
 
 ## How it works
 
-Fill in the form (name, preferred stack, GitHub username, project idea, deadline,
-comfort level) and run the pipeline — with the **Run pipeline** button or **Ctrl+Enter**:
+Fill in the form (name, preferred stack, GitHub username, project idea, deadline, comfort
+level, project type, team size, audience) and run the pipeline — with the **Run pipeline**
+button or **Ctrl+Enter**:
 
 1. **GitHub Agent** — pulls the public GitHub profile + top repos and languages.
 2. **Research Agent** — deterministic opportunity / risk / direction scan.
-3. **Architecture Agent** — deterministic module + data-flow blueprint.
-4. **Tech Stack Agent** — deterministic stack recommendation from your preference.
-5. **AO Task Agent** — assembles one copyable, AO-ready task prompt.
+3. **Feasibility Agent** — scored feasibility, verdict, effort estimate, phases, risk register.
+4. **Architecture Agent** — deterministic module + data-flow blueprint.
+5. **Tech Stack Agent** — deterministic stack recommendation from your preference.
+6. **Builder Agent** — starter scaffold (file tree + starter files), milestone checklist, and
+   a **Download scaffold (.zip)** action.
+7. **AO Task Agent** — assembles one copyable, AO-ready task prompt citing the feasibility
+   verdict and the scaffold.
 
 The **Load example** button fills the form with a sample project (which pairs with the
 bundled fallback GitHub data) so you can try the whole pipeline in one click.
@@ -85,7 +99,8 @@ abridgeai/
   delete individual entries, or clear all).
 - **Center** — form + generated outputs, with a **Export brief (.md)** action and a
   light/dark theme toggle in the top bar.
-- **Right rail** — live agent pipeline (status per agent).
+- **Right rail** — live agent pipeline (status per agent, GitHub → Research → Feasibility →
+  Architecture → Tech Stack → Builder → AO Task).
 
 Style: warm off-white background, near-black text, one lime accent, hairline borders.
 Dark theme switches the palette while keeping the same identity.
@@ -96,6 +111,8 @@ Dark theme switches the palette while keeping the same identity.
   transparently falls back to sample data and labels the card accordingly.
 - Determinism is guaranteed by hashing inputs (djb2) before selecting from fixed
   knowledge pools — no randomness anywhere in the pipeline.
+- The scaffold download is a dependency-free, store-only ZIP built in the browser;
+  the same inputs always produce byte-identical starter files.
 - Everything persists in `localStorage` under `abridgeai.*` keys (history, draft, theme);
   clearing browser data for the site resets it.
 

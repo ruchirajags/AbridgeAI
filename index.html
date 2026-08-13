@@ -4,17 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AbridgeAI — Project Workspace</title>
-  <meta name="description" content="Turn a project idea into a copyable, AO-ready task prompt. A deterministic five-agent pipeline runs entirely in your browser — no backend, no build step." />
+  <meta name="description" content="Turn a project idea into a feasibility plan, a starter scaffold, and a copyable AO-ready task prompt. A deterministic seven-agent pipeline runs entirely in your browser — no backend, no build step." />
   <meta name="theme-color" content="#b6e62c" />
 
   <!-- Social / Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="AbridgeAI" />
   <meta property="og:title" content="AbridgeAI — Project Workspace" />
-  <meta property="og:description" content="Turn a project idea into a copyable, AO-ready task prompt with a deterministic five-agent pipeline — entirely in your browser." />
+  <meta property="og:description" content="Turn a project idea into a feasibility plan, a starter scaffold, and a copyable AO-ready task prompt with a deterministic seven-agent pipeline — entirely in your browser." />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="AbridgeAI — Project Workspace" />
-  <meta name="twitter:description" content="Turn a project idea into a copyable, AO-ready task prompt with a deterministic five-agent pipeline — entirely in your browser." />
+  <meta name="twitter:description" content="Turn a project idea into a feasibility plan, a starter scaffold, and a copyable AO-ready task prompt with a deterministic seven-agent pipeline — entirely in your browser." />
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="styles.css" />
@@ -77,8 +77,8 @@
       </header>
 
       <section class="panel panel--form">
-        <h1>Scaffold a project brief</h1>
-        <p class="panel-sub">Fill the form. The agent pipeline on the right turns it into an AO-ready task.</p>
+        <h1>Plan and scaffold a project</h1>
+        <p class="panel-sub">Fill the form. The agent pipeline on the right checks feasibility, then hands you a starter scaffold and an AO-ready task.</p>
 
         <form id="project-form" class="form">
           <div class="field">
@@ -114,6 +114,31 @@
               <option value="intermediate">Intermediate</option>
               <option value="advanced">Advanced</option>
             </select>
+          </div>
+
+          <div class="field">
+            <label for="f-type">Project type</label>
+            <select id="f-type" name="type">
+              <option value="tool">CLI / developer tool</option>
+              <option value="web-app">Web app</option>
+              <option value="service">API / service</option>
+              <option value="data-pipeline">Data pipeline</option>
+              <option value="unsure">Not sure yet</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="f-team">Team size</label>
+            <select id="f-team" name="team">
+              <option value="solo">Solo</option>
+              <option value="pair">Pair</option>
+              <option value="small-team">Small team (3–5)</option>
+            </select>
+          </div>
+
+          <div class="field field--full">
+            <label for="f-audience">Audience</label>
+            <input id="f-audience" name="audience" type="text" placeholder="e.g. busy engineers who take a lot of meeting notes" autocomplete="off" />
           </div>
 
           <div class="field field--full">
@@ -157,6 +182,11 @@
           <span class="pipe-name">Research Agent</span>
           <span class="pipe-status">queued</span>
         </li>
+        <li class="pipe" data-step="feasibility">
+          <span class="pipe-dot" aria-hidden="true"></span>
+          <span class="pipe-name">Feasibility Agent</span>
+          <span class="pipe-status">queued</span>
+        </li>
         <li class="pipe" data-step="architecture">
           <span class="pipe-dot" aria-hidden="true"></span>
           <span class="pipe-name">Architecture Agent</span>
@@ -165,6 +195,11 @@
         <li class="pipe" data-step="stack">
           <span class="pipe-dot" aria-hidden="true"></span>
           <span class="pipe-name">Tech Stack Agent</span>
+          <span class="pipe-status">queued</span>
+        </li>
+        <li class="pipe" data-step="builder">
+          <span class="pipe-dot" aria-hidden="true"></span>
+          <span class="pipe-name">Builder Agent</span>
           <span class="pipe-status">queued</span>
         </li>
         <li class="pipe" data-step="task">
