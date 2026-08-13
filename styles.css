@@ -67,6 +67,18 @@ body {
 /* --------------------------------------------------------------------------
    Accessibility: skip link + visible focus
    -------------------------------------------------------------------------- */
+.noscript {
+  max-width: 560px;
+  margin: 40px auto;
+  padding: 16px 20px;
+  border: var(--hairline);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius);
+  background: var(--bg-panel);
+  color: var(--ink);
+  font-size: 14px;
+}
+
 .skip-link {
   position: absolute;
   left: -9999px;
@@ -730,6 +742,8 @@ body {
   padding: 11px 18px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22);
   z-index: 50;
+  /* Informational only — never block clicks on the content underneath. */
+  pointer-events: none;
 }
 
 /* --------------------------------------------------------------------------
