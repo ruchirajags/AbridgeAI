@@ -2,6 +2,7 @@
    AbridgeAI — agent workspace
    Client-side agent pipeline. Everything is deterministic: the same inputs
    always produce the same outputs, so results are reproducible per project.
+   Zero dependencies — plain HTML/CSS/JS.
    ========================================================================== */
 "use strict";
 
@@ -14,6 +15,7 @@
 
   var form = $("#project-form");
   var runBtn = $("#run-btn");
+  var exampleBtn = $("#example-btn");
   var formHint = $("#form-hint");
   var statusEl = $("#status");
   var statusText = $("#status-text");
@@ -23,13 +25,21 @@
   var historyList = $("#history-list");
   var historyEmpty = $("#history-empty");
   var historyCount = $("#history-count");
+  var historyClear = $("#history-clear");
   var toastEl = $("#toast");
   var pipelineState = $("#pipeline-state");
+  var themeBtn = $("#theme-btn");
+  var exportBtn = $("#export-btn");
 
   var STEP_ORDER = ["github", "research", "architecture", "stack", "task"];
 
   var HISTORY_KEY = "abridgeai.history.v1";
+  var DRAFT_KEY = "abridgeai.draft.v1";
+  var THEME_KEY = "abridgeai.theme.v1";
+
   var running = false;
+  // The most recently generated / loaded project record (drives the export button).
+  var currentProject = null;
 
   // ------------------------------------------------------------------------
   // Small utilities
@@ -44,6 +54,15 @@
 
   function sleep(ms) {
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  function debounce(fn, ms) {
+    var t = null;
+    return function () {
+      var args = arguments;
+      clearTimeout(t);
+      t = setTimeout(function () { fn.apply(null, args); }, ms);
+    };
   }
 
   // djb2 — stable hash so agent outputs are deterministic per input string.
@@ -81,6 +100,44 @@
     toastEl.hidden = false;
     clearTimeout(toast._t);
     toast._t = setTimeout(function () { toastEl.hidden = true; }, 2600);
+  }
+
+  // ------------------------------------------------------------------------
+  // Theme (light / dark). Respects the stored choice, else the system theme.
+  // ------------------------------------------------------------------------
+  function storedTheme() {
+    try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; }
+  }
+
+  function systemTheme() {
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  }
+
+  function applyTheme(mode) {
+    document.documentElement.setAttribute("data-theme", mode);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = mode === "dark" ? "#151310" : "#b6e62c";
+    themeBtn.textContent = mode === "dark" ? "Light mode" : "Dark mode";
+  }
+
+  function initTheme() {
+    applyTheme(storedTheme() || systemTheme());
+    themeBtn.addEventListener("click", function () {
+      var next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* ignore */ }
+      applyTheme(next);
+      toast(next === "dark" ? "Dark theme on." : "Light theme on.");
+    });
+    if (window.matchMedia) {
+      var mql = window.matchMedia("(prefers-color-scheme: dark)");
+      var onChange = function (e) {
+        if (!storedTheme()) applyTheme(e.matches ? "dark" : "light");
+      };
+      if (mql.addEventListener) mql.addEventListener("change", onChange);
+      else if (mql.addListener) mql.addListener(onChange);
+    }
   }
 
   // ------------------------------------------------------------------------
@@ -404,6 +461,10 @@
     statusEl.textContent = state === "running" ? "running…" : state === "done" ? "done" : "queued";
   }
 
+  function resetSteps() {
+    STEP_ORDER.forEach(function (step) { setStepState(step, "queued"); });
+  }
+
   function setPipelineState(state) {
     pipelineState.textContent = state;
   }
@@ -431,12 +492,28 @@
 
     head.appendChild(titleEl);
 
+    var headActions = document.createElement("div");
+    headActions.className = "card-head-actions";
+
+    if (opts.copyText) {
+      var copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "card-copy";
+      copyBtn.textContent = "Copy";
+      copyBtn.addEventListener("click", function () {
+        copyText(opts.copyText, copyBtn);
+      });
+      headActions.appendChild(copyBtn);
+    }
+
     if (opts.badge) {
       var badge = document.createElement("span");
       badge.className = "card-badge";
       badge.textContent = opts.badge;
-      head.appendChild(badge);
+      headActions.appendChild(badge);
     }
+
+    if (headActions.children.length) head.appendChild(headActions);
 
     var body = document.createElement("div");
     body.className = "card-body";
@@ -476,6 +553,13 @@
   }
 
   function copyText(text, btn) {
+    function flash() {
+      if (btn) {
+        btn.classList.add("is-copied");
+        setTimeout(function () { btn.classList.remove("is-copied"); }, 1400);
+      }
+    }
+
     function fallback() {
       var ta = document.createElement("textarea");
       ta.value = text;
@@ -483,15 +567,15 @@
       ta.style.opacity = "0";
       document.body.appendChild(ta);
       ta.select();
-      try { document.execCommand("copy"); toast("Prompt copied to clipboard"); }
+      try { document.execCommand("copy"); toast("Copied to clipboard"); flash(); }
       catch (e) { toast("Could not copy — select the text manually."); }
       document.body.removeChild(ta);
     }
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () {
-        toast("Prompt copied to clipboard");
-        if (btn) { btn.classList.add("is-copied"); setTimeout(function () { btn.classList.remove("is-copied"); }, 1400); }
+        toast("Copied to clipboard");
+        flash();
       }, fallback);
     } else {
       fallback();
@@ -499,7 +583,77 @@
   }
 
   // ------------------------------------------------------------------------
-  // History (left rail)
+  // Brief export (Markdown file download — no dependencies)
+  // ------------------------------------------------------------------------
+  function slugify(str) {
+    return String(str || "project").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "project";
+  }
+
+  function buildBriefMarkdown(record) {
+    var L = [];
+    L.push("# " + (record.name || "Project") + " — AbridgeAI Brief");
+    L.push("");
+    L.push("> Generated by AbridgeAI · " + (record.time || new Date().toLocaleString()));
+    L.push("");
+    L.push("## Project");
+    L.push("");
+    L.push("- **Idea:** " + (record.idea || "—"));
+    L.push("- **Stack:** " + (STACKS[record.stack] || STACKS.unsure).label);
+    L.push("- **GitHub:** " + (record.github || "—"));
+    L.push("- **Deadline:** " + (record.deadline || "—"));
+    L.push("- **Comfort:** " + (record.comfort || "—"));
+    L.push("");
+
+    if (record.outputs) {
+      var agents = [
+        ["1. GitHub Agent", record.outputs.github.text],
+        ["2. Research Agent", record.outputs.research],
+        ["3. Architecture Agent", record.outputs.architecture],
+        ["4. Tech Stack Agent", record.outputs.stack],
+        ["5. AO Task Agent", record.outputs.prompt || record.prompt]
+      ];
+      agents.forEach(function (a) {
+        L.push("## " + a[0]);
+        L.push("");
+        L.push("```text");
+        L.push(a[1]);
+        L.push("```");
+        L.push("");
+      });
+    }
+    return L.join("\n");
+  }
+
+  function downloadFile(name, content, type) {
+    var blob = new Blob([content], { type: type || "text/markdown;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function updateExportBtn() {
+    exportBtn.hidden = !currentProject;
+  }
+
+  exportBtn.addEventListener("click", function () {
+    if (!currentProject) return;
+    downloadFile(
+      slugify(currentProject.name || currentProject.idea) + "-abridgeai-brief.md",
+      buildBriefMarkdown(currentProject)
+    );
+    toast("Project brief exported.");
+  });
+
+  // ------------------------------------------------------------------------
+  // History (left rail) — now stores full outputs, not just inputs
   // ------------------------------------------------------------------------
   function readHistory() {
     try {
@@ -516,37 +670,57 @@
     historyList.innerHTML = "";
     historyEmpty.style.display = items.length ? "none" : "";
     historyCount.textContent = items.length;
+    historyClear.hidden = !items.length;
 
     items.forEach(function (item) {
       var li = document.createElement("li");
       li.className = "history-item" + (item.id === activeId ? " is-active" : "");
       li.innerHTML =
         '<p class="history-item-title">' + esc(item.name || item.idea || "Untitled") + "</p>" +
-        '<div class="history-item-meta">' + esc(item.time || "") + "</div>";
+        '<div class="history-item-meta">' + esc(item.time || "") + "</div>" +
+        '<button type="button" class="history-item-del" aria-label="Delete ' + esc(item.name || item.idea || "project") + '">×</button>';
       li.addEventListener("click", function () {
-        fillForm(item);
-        renderHistory(item.id);
+        loadProject(item);
+      });
+      var del = li.querySelector(".history-item-del");
+      del.addEventListener("click", function (e) {
+        e.stopPropagation();
+        deleteHistoryItem(item.id);
       });
       historyList.appendChild(li);
     });
   }
 
-  function saveHistory(input) {
+  function deleteHistoryItem(id) {
+    var items = readHistory().filter(function (it) { return it.id !== id; });
+    writeHistory(items);
+    if (currentProject && currentProject.id === id) currentProject = null;
+    updateExportBtn();
+    renderHistory();
+    toast("Project removed from history.");
+  }
+
+  historyClear.addEventListener("click", function () {
+    if (!readHistory().length) return;
+    if (window.confirm("Clear all saved projects? This cannot be undone.")) {
+      writeHistory([]);
+      currentProject = null;
+      updateExportBtn();
+      renderHistory();
+      toast("History cleared.");
+    }
+  });
+
+  function saveHistory(record) {
     var items = readHistory();
-    var now = new Date();
-    var record = {
-      id: Date.now().toString(36),
-      name: input.name,
-      stack: input.stack,
-      github: input.github,
-      idea: input.idea,
-      deadline: input.deadline,
-      comfort: input.comfort,
-      time: now.toLocaleString()
-    };
     items.unshift(record);
     writeHistory(items.slice(0, 12));
-    renderHistory(record.id);
+  }
+
+  function loadProject(item) {
+    fillForm(item);
+    renderHistory(item.id);
+    renderSavedProject(item);
   }
 
   function fillForm(item) {
@@ -556,7 +730,6 @@
     $("#f-idea").value = item.idea || "";
     $("#f-deadline").value = item.deadline || "";
     $("#f-comfort").value = item.comfort || "beginner";
-    toast("Loaded project into the form.");
   }
 
   function readForm() {
@@ -570,6 +743,86 @@
     };
   }
 
+  // Re-render a saved project's outputs without re-running the pipeline.
+  function renderSavedProject(item) {
+    outputsEl.innerHTML = "";
+    resetSteps();
+    var saved = item.outputs;
+    var prompt = saved && (saved.prompt || item.prompt);
+    if (!saved || !prompt) {
+      outputsPanel.hidden = true;
+      setPipelineState("standby");
+      setStatus("idle", "idle");
+      toast("Run the pipeline to generate outputs for this project.");
+      return;
+    }
+    outputsPanel.hidden = false;
+    addOutputCard(1, "GitHub Agent", "<pre>" + esc(saved.github.text) + "</pre>", {
+      agent: "github",
+      badge: saved.github.badge,
+      copyText: saved.github.text
+    });
+    addOutputCard(2, "Research Agent", "<pre>" + esc(saved.research) + "</pre>", {
+      agent: "research",
+      copyText: saved.research
+    });
+    addOutputCard(3, "Architecture Agent", "<pre>" + esc(saved.architecture) + "</pre>", {
+      agent: "architecture",
+      copyText: saved.architecture
+    });
+    addOutputCard(4, "Tech Stack Agent", "<pre>" + esc(saved.stack) + "</pre>", {
+      agent: "stack",
+      copyText: saved.stack
+    });
+    renderPromptCard(prompt);
+    STEP_ORDER.forEach(function (step) { setStepState(step, "done"); });
+    setPipelineState("complete");
+    setStatus("done", "saved · " + (item.time || ""));
+    currentProject = item;
+    updateExportBtn();
+    toast("Loaded saved project outputs.");
+  }
+
+  // ------------------------------------------------------------------------
+  // Draft autosave — refresh-safe form persistence
+  // ------------------------------------------------------------------------
+  function writeDraft() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(readForm())); } catch (e) { /* ignore */ }
+  }
+
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ignore */ }
+  }
+
+  function restoreDraft() {
+    var draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (e) { /* ignore */ }
+    if (!draft) return;
+    $("#f-name").value = draft.name || "";
+    $("#f-stack").value = draft.stack || "typescript";
+    $("#f-github").value = draft.github || "";
+    $("#f-idea").value = draft.idea || "";
+    $("#f-deadline").value = draft.deadline || "";
+    $("#f-comfort").value = draft.comfort || "beginner";
+  }
+
+  form.addEventListener("input", debounce(writeDraft, 350));
+
+  // ------------------------------------------------------------------------
+  // Load example — one click to try the pipeline with sample data
+  // ------------------------------------------------------------------------
+  exampleBtn.addEventListener("click", function () {
+    $("#f-name").value = "Ada";
+    $("#f-stack").value = "python";
+    $("#f-github").value = "octocat";
+    $("#f-idea").value = "A CLI that turns meeting notes into action items, with a simple web dashboard.";
+    $("#f-deadline").value = "4 weeks";
+    $("#f-comfort").value = "intermediate";
+    writeDraft();
+    toast("Example loaded — press Run pipeline (or Ctrl+Enter).");
+    $("#f-idea").focus();
+  });
+
   // ------------------------------------------------------------------------
   // Pipeline runner
   // ------------------------------------------------------------------------
@@ -580,8 +833,9 @@
     formHint.textContent = "";
     outputsEl.innerHTML = "";
     outputsPanel.hidden = true;
+    updateExportBtn();
 
-    STEP_ORDER.forEach(function (step) { setStepState(step, "queued"); });
+    resetSteps();
     setPipelineState("running");
     setStatus("running", "running pipeline");
 
@@ -591,9 +845,11 @@
     var gh = await loadGitHub(input.github);
     await sleep(650);
     var ghText = githubAgentText(gh);
+    var ghBadge = gh.source === "live" ? "live · github.com" : "sample data";
     addOutputCard(1, "GitHub Agent", "<pre>" + esc(ghText) + "</pre>", {
       agent: "github",
-      badge: gh.source === "live" ? "live · github.com" : "sample data"
+      badge: ghBadge,
+      copyText: ghText
     });
     setStepState("github", "done");
 
@@ -602,7 +858,10 @@
     setStatus("running", "research agent…");
     await sleep(900);
     var researchText = researchAgentText(input, gh);
-    addOutputCard(2, "Research Agent", "<pre>" + esc(researchText) + "</pre>", { agent: "research" });
+    addOutputCard(2, "Research Agent", "<pre>" + esc(researchText) + "</pre>", {
+      agent: "research",
+      copyText: researchText
+    });
     setStepState("research", "done");
 
     // 3 — Architecture Agent
@@ -610,7 +869,10 @@
     setStatus("running", "architecture agent…");
     await sleep(900);
     var archText = architectureAgentText(input);
-    addOutputCard(3, "Architecture Agent", "<pre>" + esc(archText) + "</pre>", { agent: "architecture" });
+    addOutputCard(3, "Architecture Agent", "<pre>" + esc(archText) + "</pre>", {
+      agent: "architecture",
+      copyText: archText
+    });
     setStepState("architecture", "done");
 
     // 4 — Tech Stack Agent
@@ -618,7 +880,10 @@
     setStatus("running", "tech stack agent…");
     await sleep(800);
     var stackText = stackAgentText(input);
-    addOutputCard(4, "Tech Stack Agent", "<pre>" + esc(stackText) + "</pre>", { agent: "stack" });
+    addOutputCard(4, "Tech Stack Agent", "<pre>" + esc(stackText) + "</pre>", {
+      agent: "stack",
+      copyText: stackText
+    });
     setStepState("stack", "done");
 
     // 5 — AO Task Agent (assembles the copyable prompt)
@@ -642,13 +907,38 @@
     setPipelineState("complete");
     setStatus("done", "complete · " + timeStamp());
 
-    if (input.idea) saveHistory(input);
+    if (input.idea) {
+      var record = {
+        id: Date.now().toString(36),
+        name: input.name,
+        stack: input.stack,
+        github: input.github,
+        idea: input.idea,
+        deadline: input.deadline,
+        comfort: input.comfort,
+        time: new Date().toLocaleString(),
+        outputs: {
+          github: { text: ghText, badge: ghBadge },
+          research: researchText,
+          architecture: archText,
+          stack: stackText,
+          prompt: promptText
+        },
+        prompt: promptText
+      };
+      currentProject = record;
+      updateExportBtn();
+      saveHistory(record);
+      renderHistory(record.id);
+      clearDraft();
+    }
+
     running = false;
     runBtn.disabled = false;
     formHint.textContent = "Pipeline complete.";
   }
 
-  form.addEventListener("submit", function (e) {
+  function onSubmit(e) {
     e.preventDefault();
     var input = readForm();
     if (!input.idea) {
@@ -656,8 +946,23 @@
       return;
     }
     runPipeline(input);
+  }
+
+  form.addEventListener("submit", onSubmit);
+
+  // Ctrl/Cmd + Enter anywhere in the form runs the pipeline.
+  form.addEventListener("keydown", function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      onSubmit(e);
+    }
   });
 
-  // History seeded empty; render whatever exists.
+  // ------------------------------------------------------------------------
+  // Boot
+  // ------------------------------------------------------------------------
+  initTheme();
+  restoreDraft();
   renderHistory();
+  updateExportBtn();
 })();

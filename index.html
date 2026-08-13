@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <div class="app">
 
     <!-- ============ LEFT: PROJECT HISTORY ============ -->
@@ -27,6 +28,7 @@
       <div class="rail-head">
         <span class="rail-label">History</span>
         <span class="rail-count" id="history-count">0</span>
+        <button type="button" class="rail-action" id="history-clear" title="Clear history" hidden>Clear</button>
       </div>
       <div class="history-empty" id="history-empty">
         No projects yet.<br />
@@ -36,15 +38,18 @@
     </aside>
 
     <!-- ============ CENTER: FORM + OUTPUTS ============ -->
-    <main class="center">
+    <main class="center" id="main">
       <header class="topbar">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true"></span>
           <span class="brand-name">AbridgeAI</span>
         </div>
-        <div class="status" id="status" data-state="idle">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span class="status-text" id="status-text">idle</span>
+        <div class="topbar-right">
+          <button type="button" class="theme-btn" id="theme-btn" title="Toggle light / dark theme">Dark mode</button>
+          <div class="status" id="status" data-state="idle">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="status-text" id="status-text">idle</span>
+          </div>
         </div>
       </header>
 
@@ -95,13 +100,19 @@
 
           <div class="form-actions">
             <button type="submit" class="btn btn--primary" id="run-btn">Run pipeline</button>
+            <button type="button" class="btn btn--ghost" id="example-btn">Load example</button>
             <span class="form-hint" id="form-hint"></span>
           </div>
         </form>
       </section>
 
       <section class="panel panel--outputs" id="outputs-panel" hidden>
-        <h2>Generated outputs</h2>
+        <div class="panel-head-row">
+          <h2>Generated outputs</h2>
+          <div class="panel-head-actions">
+            <button type="button" class="btn btn--ghost btn--sm" id="export-btn" hidden>Export brief (.md)</button>
+          </div>
+        </div>
         <div class="outputs" id="outputs"></div>
       </section>
     </main>
@@ -143,7 +154,7 @@
 
   </div>
 
-  <div class="toast" id="toast" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="script.js"></script>
 </body>
