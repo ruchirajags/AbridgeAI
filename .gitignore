@@ -1,0 +1,18 @@
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*~
+.vscode/
+.idea/
+
+# --- Logs & secrets ---
+*.log
+.env
+.env.*
+!.env.example
+
+# --- Dependency / build dirs (future-proofing; the site has no build step) ---
+node_modules/
+dist/
