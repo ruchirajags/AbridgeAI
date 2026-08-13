@@ -404,23 +404,53 @@
     }
   };
 
+    function stackParts(input) {
+    return String(input.stackCustom || "")
+      .split(",")
+      .map(function (part) { return part.trim(); })
+      .filter(Boolean);
+  }
+
+  function stackLabel(input) {
+    var parts = stackParts(input);
+    if (parts.length) return parts.join(" + ");
+    return (STACKS[input.stack] || STACKS.unsure).label;
+  }
+
   function stackAgentText(input) {
+    var parts = stackParts(input);
+    var custom = parts.length > 0;
     var key = input.stack || "unsure";
-    var s = STACKS[key] || STACKS.unsure;
+    var s = custom ? null : (STACKS[key] || STACKS.unsure);
     var comfort = input.comfort === "advanced" ? "skip guardrails, add CI + benchmarks early"
       : input.comfort === "intermediate" ? "add small tests per module, keep it boring"
       : "prefer scaffolding + step-by-step notes, one feature at a time";
 
     var lines = [];
-    lines.push("Stack: " + s.label);
-    lines.push("  app     " + s.app);
-    lines.push("  ui      " + s.ui);
-    lines.push("  api     " + s.api);
-    lines.push("  data    " + s.data);
-    lines.push("  test    " + s.test);
-    lines.push("  lint    " + s.lint);
-    lines.push("");
-    lines.push("Why: " + s.why);
+
+    if (custom) {
+      lines.push("Custom stack: " + parts.join(" + "));
+      lines.push("Stack parts: " + parts.join(", "));
+      lines.push("  app     define the smallest runnable slice for this stack");
+      lines.push("  ui      use the lightest UI layer from the chosen stack");
+      lines.push("  api     keep the first endpoint, command, or workflow narrow");
+      lines.push("  data    start with local files or SQLite unless the idea clearly needs more");
+      lines.push("  test    add one smoke test around the core flow");
+      lines.push("  lint    use the standard formatter/linter for these tools");
+      lines.push("");
+      lines.push("Why: Custom stack requested by the builder; keep the first AO task scoped so the agent does not invent extra architecture.");
+    } else {
+      lines.push("Stack: " + s.label);
+      lines.push("  app     " + s.app);
+      lines.push("  ui      " + s.ui);
+      lines.push("  api     " + s.api);
+      lines.push("  data    " + s.data);
+      lines.push("  test    " + s.test);
+      lines.push("  lint    " + s.lint);
+      lines.push("");
+      lines.push("Why: " + s.why);
+    }
+
     lines.push("Pace (" + input.comfort + "): " + comfort);
     return lines.join("\n");
   }
@@ -543,7 +573,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // Builder Agent — starter scaffold (file tree + files) and milestone plan
+  // Builder Agent — AO handoff scaffold (file tree + files) and milestone plan
   // ------------------------------------------------------------------------
   function builderAgent(input, feasibility) {
     var stackKey = input.stack || "unsure";
@@ -556,7 +586,8 @@
 
     var lines = [];
     lines.push("Builder plan");
-    lines.push("Scaffold: " + files.length + " files · " + dirs + " directories (" + stack.label + ")");
+    lines.push("AO handoff scaffold: " + files.length + " files · " + dirs + " directories (" + stackLabel(input) + ")");
+    lines.push("Use the ZIP as a scoped starting point for AO, not as production-ready code.");
     if (stackKey === "unsure") {
       lines.push("Stack: recommended default (TypeScript / JavaScript) until the stack is decided.");
     }
@@ -645,6 +676,8 @@
       "__init__.py": "package marker",
       "README.md": "quick start + run instructions",
       "PLAN.md": "feasibility summary + milestones",
+      "AO_TASK.md": "scoped first PR prompt for AO",
+      "ACCEPTANCE_CRITERIA.md": "checks AO should satisfy before PR review",
       ".gitignore": "ignore build artifacts"
     };
     return map[name] || "project file";
@@ -659,15 +692,156 @@
     ];
   }
 
-  function scaffoldFiles(input, slug) {
+  function scaffoldStackName(input) {
+    return stackLabel(input);
+  }
+
+  function scaffoldCommands(stackKey, slug) {
+    if (stackKey === "python") {
+      return {
+        install: "uv sync",
+        run: "uv run " + slug + " \"hello\"",
+        test: "uv run pytest",
+        build: "uv run ruff check ."
+      };
+    }
+    if (stackKey === "go") {
+      return {
+        install: "go mod tidy",
+        run: "go run . \"hello\"",
+        test: "go test ./...",
+        build: "go build ./..."
+      };
+    }
+    if (stackKey === "rust") {
+      return {
+        install: "cargo fetch",
+        run: "cargo run -- \"hello\"",
+        test: "cargo test",
+        build: "cargo check"
+      };
+    }
+    return {
+      install: "npm install",
+      run: "node dist/index.js \"hello\"",
+      test: "npm test",
+      build: "npm run build"
+    };
+  }
+
+  function scaffoldReadme(input, slug, name, desc, stackKey) {
+    var commands = scaffoldCommands(stackKey, slug);
+    var lines = [];
+    lines.push("# " + name);
+    lines.push("");
+    lines.push(desc);
+    lines.push("");
+    lines.push("## What this scaffold contains");
+    lines.push("");
+    lines.push("- A small deterministic core for the first vertical slice.");
+    lines.push("- A thin entry point that calls the core.");
+    lines.push("- A smoke test so AO has a concrete correctness target.");
+    lines.push("- PLAN.md, AO_TASK.md, and ACCEPTANCE_CRITERIA.md for scoped delegation.");
+    lines.push("");
+    lines.push("## Stack");
+    lines.push("");
+    lines.push(scaffoldStackName(input));
+    lines.push("");
+    lines.push("## Install");
+    lines.push("");
+    lines.push("```bash");
+    lines.push(commands.install);
+    lines.push("```");
+    lines.push("");
+    lines.push("## Run");
+    lines.push("");
+    lines.push("```bash");
+    lines.push(commands.run);
+    lines.push("```");
+    lines.push("");
+    lines.push("## Test");
+    lines.push("");
+    lines.push("```bash");
+    lines.push(commands.test);
+    lines.push("```");
+    lines.push("");
+    lines.push("## Build / lint");
+    lines.push("");
+    lines.push("```bash");
+    lines.push(commands.build);
+    lines.push("```");
+    lines.push("");
+    lines.push("## First AO task");
+    lines.push("");
+    lines.push("Use AO_TASK.md as the first prompt. Keep the first PR narrow and only implement the vertical slice described there.");
+    lines.push("");
+    lines.push("## What not to build yet");
+    lines.push("");
+    lines.push("- Authentication.");
+    lines.push("- Database persistence unless the first slice requires it.");
+    lines.push("- Multiple UI screens.");
+    lines.push("- Deployment automation.");
+    lines.push("- Extra integrations not listed in the acceptance criteria.");
+    lines.push("");
+    lines.push("This scaffold is an AO handoff scaffold, not production-ready code.");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+  function aoTaskMarkdown(input, slug) {
+    var lines = [];
+    lines.push("# AO Task");
+    lines.push("");
+    lines.push("Project: " + (input.name || slug));
+    lines.push("Stack: " + scaffoldStackName(input));
+    lines.push("Deadline: " + (input.deadline || "not specified"));
+    lines.push("Comfort: " + (input.comfort || "beginner"));
+    lines.push("");
+    lines.push("## Idea");
+    lines.push("");
+    lines.push(input.idea || "Build the first deterministic vertical slice.");
+    lines.push("");
+    lines.push("## First PR prompt");
+    lines.push("");
+    lines.push("Implement the smallest runnable vertical slice for this project using the existing scaffold.");
+    lines.push("Keep the deterministic core separate from the entry point.");
+    lines.push("Add or update one smoke test that proves the core behavior.");
+    lines.push("Update README.md only if the run/test commands change.");
+    lines.push("Do not add authentication, persistence, deployment, or unrelated screens.");
+    lines.push("Open a PR with a concise summary and verification notes.");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+  function acceptanceMarkdown(input, slug) {
+    var commands = scaffoldCommands(input.stack || "unsure", slug);
+    var lines = [];
+    lines.push("# Acceptance Criteria");
+    lines.push("");
+    lines.push("- Install works: `" + commands.install + "`");
+    lines.push("- Run command works: `" + commands.run + "`");
+    lines.push("- One smoke test passes: `" + commands.test + "`");
+    lines.push("- README instructions are accurate.");
+    lines.push("- The first vertical slice is implemented only.");
+    lines.push("- No unrelated features are added.");
+    lines.push("- The core logic remains deterministic and easy to test.");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+ function scaffoldFiles(input, slug) {
     var stackKey = input.stack || "unsure";
     var name = input.name || slug;
     var desc = input.idea || "A deterministic tool.";
-    var files = [{ path: "PLAN.md", content: planMarkdown(input, slug) }];
-    var starter = stackKey === "python" ? pyStarter(slug, name, desc)
-      : stackKey === "go" ? goStarter(slug, name, desc)
-      : stackKey === "rust" ? rustStarter(slug, name, desc)
-      : tsStarter(slug, name, desc); // typescript + unsure (recommended default)
+    var files = [
+      { path: "PLAN.md", content: planMarkdown(input, slug) },
+      { path: "AO_TASK.md", content: aoTaskMarkdown(input, slug) },
+      { path: "ACCEPTANCE_CRITERIA.md", content: acceptanceMarkdown(input, slug) }
+    ];
+    var starter = stackKey === "python" ? pyStarter(slug, name, desc, input)
+      : stackKey === "go" ? goStarter(slug, name, desc, input)
+      : stackKey === "rust" ? rustStarter(slug, name, desc, input)
+      : tsStarter(slug, name, desc, input); // typescript + unsure (recommended default)
     return files.concat(starter);
   }
 
@@ -691,7 +865,7 @@
     return lines.join("\n");
   }
 
-  function tsStarter(slug, name, desc) {
+  function tsStarter(slug, name, desc, input) {
     var pkg = {
       name: slug,
       version: "0.1.0",
@@ -744,7 +918,7 @@
     ];
   }
 
-  function pyStarter(slug, name, desc) {
+  function pyStarter(slug, name, desc, input) {
     return [
       { path: "pyproject.toml", content:
         "[project]\n" +
@@ -793,12 +967,11 @@
         "def test_empty():\n" +
         '    assert run("") == "received: "\n' },
       { path: ".gitignore", content: "__pycache__/\n.venv/\n*.pyc\n" },
-      { path: "README.md", content:
-        "# " + name + "\n\n" + desc + "\n\n## Run\n\nuv sync\nuv run " + slug + " \"hello\"\n" }
+       { path: "README.md", content: scaffoldReadme(input, slug, name, desc, "python") }
     ];
   }
 
-  function goStarter(slug, name, desc) {
+  function goStarter(slug, name, desc, input) {
     return [
       { path: "go.mod", content: "module " + slug + "\n\ngo 1.22\n" },
       { path: "main.go", content:
@@ -833,12 +1006,11 @@
         "  }\n" +
         "}\n" },
       { path: ".gitignore", content: "bin/\n*.exe\n" },
-      { path: "README.md", content:
-        "# " + name + "\n\n" + desc + "\n\n## Run\n\ngo run . \"hello\"\n" }
+      { path: "README.md", content: scaffoldReadme(input, slug, name, desc, "go") }
     ];
   }
 
-  function rustStarter(slug, name, desc) {
+  function rustStarter(slug, name, desc, input) {
     return [
       { path: "Cargo.toml", content:
         "[package]\n" +
@@ -870,8 +1042,7 @@
         "  }\n" +
         "}\n" },
       { path: ".gitignore", content: "/target\n" },
-      { path: "README.md", content:
-        "# " + name + "\n\n" + desc + "\n\n## Run\n\ncargo run -- \"hello\"\n" }
+      { path: "README.md", content: scaffoldReadme(input, slug, name, desc, "rust") }
     ];
   }
 
@@ -1227,7 +1398,7 @@
     L.push("## Project");
     L.push("");
     L.push("- **Idea:** " + (record.idea || "—"));
-    L.push("- **Stack:** " + (STACKS[record.stack] || STACKS.unsure).label);
+    L.push("- **Stack:** " + stackLabel(record));
     L.push("- **Type:** " + ((PROJECT_TYPES[record.type] || record.type || "—")));
     L.push("- **Team:** " + ((TEAM_SIZES[record.team] || record.team || "—")));
     L.push("- **Audience:** " + (record.audience || "—"));
@@ -1368,6 +1539,7 @@
   function fillForm(item) {
     $("#f-name").value = item.name || "";
     $("#f-stack").value = item.stack || "typescript";
+    $("#f-stack-custom").value = item.stackCustom || "";
     $("#f-github").value = item.github || "";
     $("#f-idea").value = item.idea || "";
     $("#f-deadline").value = item.deadline || "";
@@ -1381,6 +1553,7 @@
     return {
       name: $("#f-name").value.trim(),
       stack: $("#f-stack").value,
+      stackCustom: $("#f-stack-custom").value.trim(),
       github: $("#f-github").value.trim(),
       idea: $("#f-idea").value.trim(),
       deadline: $("#f-deadline").value.trim(),
@@ -1456,6 +1629,7 @@
     if (!draft) return;
     $("#f-name").value = draft.name || "";
     $("#f-stack").value = draft.stack || "typescript";
+    $("#f-stack-custom").value = draft.stackCustom || "";
     $("#f-github").value = draft.github || "";
     $("#f-idea").value = draft.idea || "";
     $("#f-deadline").value = draft.deadline || "";
@@ -1473,6 +1647,7 @@
   exampleBtn.addEventListener("click", function () {
     $("#f-name").value = "Ada";
     $("#f-stack").value = "python";
+    $("#f-stack-custom").value = "Python, FastAPI, React";
     $("#f-github").value = "octocat";
     $("#f-idea").value = "A CLI that turns meeting notes into action items, with a simple web dashboard.";
     $("#f-deadline").value = "4 weeks";
@@ -1578,7 +1753,7 @@
       githubFirstLine: ghText.split("\n")[0],
       feasLine: feas.score + "/100 — " + feas.verdict,
       builderLine: builder.files.length + " files · " + countDirs(builder.files) + " dirs — download the scaffold (.zip)",
-      stackLabel: (STACKS[input.stack] || STACKS.unsure).label,
+      stackLabel: stackLabel(input),
       architectureFirstLine: archText.split("\n")[0],
       researchFirstLine: researchText.split("\n")[0]
     };
@@ -1594,6 +1769,7 @@
         id: Date.now().toString(36),
         name: input.name,
         stack: input.stack,
+        stackCustom: input.stackCustom,
         github: input.github,
         idea: input.idea,
         deadline: input.deadline,

@@ -383,6 +383,12 @@ body {
   grid-column: 1 / -1;
 }
 
+.field-help {
+  color: var(--ink-faint);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .field label {
   font-size: 12px;
   font-weight: 600;
