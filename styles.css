@@ -562,20 +562,6 @@ body {
   color: var(--ink);
 }
 
-.card-body .kv {
-  display: grid;
-  grid-template-columns: 150px 1fr;
-  gap: 4px 14px;
-  font-size: 13.5px;
-}
-
-.card-body .kv dt {
-  color: var(--ink-faint);
-  font-weight: 600;
-}
-
-.card-body .kv dd { margin: 0; }
-
 .prompt-wrap {
   position: relative;
 }

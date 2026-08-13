@@ -958,7 +958,15 @@
       formHint.textContent = "Add a project idea first.";
       return;
     }
-    runPipeline(input);
+    // Never leave the UI stuck if something unexpected fails mid-pipeline.
+    runPipeline(input).catch(function () {
+      running = false;
+      runBtn.disabled = false;
+      setPipelineState("standby");
+      setStatus("idle", "idle");
+      formHint.textContent = "";
+      toast("Something went wrong — please try again.");
+    });
   }
 
   form.addEventListener("submit", onSubmit);
