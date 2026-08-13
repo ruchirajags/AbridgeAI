@@ -40,9 +40,9 @@ same outputs.
 - **Works everywhere** — plain HTML/CSS/JS. Open the file directly or serve the folder;
   no dependencies, no install.
 
-## [AbridgeAI-dashboard form](Abridge-kanman-board.png)
+## ![AbridgeAI-dashboard form](Abridge-kanman-board.png)
 
-## [AbridgeAI-Kanman Board](AbridgeAi-dashboard.png)
+## ![AbridgeAI-Kanman Board](AbridgeAi-dashboard.png)
 
 ## How it works
 
@@ -100,9 +100,11 @@ abridgeai/
 └── README.md
 ```
 
-### OutputRepo(where AO raised a PR for the problem statement in the repo): https://github.com/ruchirajags/AO-DUMMY.git
+### Output Repo(where AO raised a PR for the problem statement): 
+https://github.com/ruchirajags/AO-DUMMY.git
 
-### Demo Video: https://youtu.be/AJ6Sbk-3UQU
+### Demo Video: 
+https://youtu.be/AJ6Sbk-3UQU
 
 ## Layout
 
