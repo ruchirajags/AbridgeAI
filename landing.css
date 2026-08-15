@@ -1,0 +1,504 @@
+/* ==========================================================================
+   AbridgeAI — landing page
+   Loads AFTER styles.css: reuses its color tokens, --display font, buttons,
+   and — for the product preview specifically — the dashboard's own real
+   component classes (.timeline/.tl-row, .metrics-row, .feas-arc, etc.) so
+   the preview is a true reflection of the app, not a redrawn mockup.
+   Nothing here overrides or edits styles.css.
+   Desktop-first by instruction; degrades acceptably below ~960px.
+   ========================================================================== */
+
+.landing {
+    background: var(--bg);
+    color: var(--ink);
+}
+
+.landing * {
+    box-sizing: border-box;
+}
+
+/* Landing-only display face — matches the rounded, friendly headline style
+   of the reference. Scoped here rather than overriding the shared
+   --display token, so the dashboard's Space Grotesk stays untouched. */
+.landing {
+    --l-display: "Fraunces", ui-serif, Georgia, serif;
+}
+
+/* --------------------------------------------------------------------------
+   Navbar
+   -------------------------------------------------------------------------- */
+.l-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 20px 32px;
+    border-bottom: var(--hairline);
+}
+
+.l-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    color: var(--ink);
+}
+
+.l-brand-mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: block;
+}
+
+.l-brand-name {
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+}
+
+.l-nav-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--lime-ink);
+    background: var(--lime);
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 9px 18px;
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.l-nav-cta:hover {
+    background: var(--lime-bright);
+}
+
+.l-nav-cta:active {
+    transform: translateY(1px);
+}
+
+.l-arrow {
+    display: inline-block;
+    transition: transform 0.18s ease;
+}
+
+.l-nav-cta:hover .l-arrow,
+.l-cta-btn:hover .l-arrow {
+    transform: translateX(3px);
+}
+
+/* --------------------------------------------------------------------------
+   Hero
+   -------------------------------------------------------------------------- */
+.l-hero {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 104px 32px 0;
+    text-align: center;
+}
+
+.l-headline {
+    font-family: var(--l-display);
+    font-weight: 700;
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+    line-height: 1.08;
+    margin: 0;
+    font-size: clamp(38px, 4.8vw, 58px);
+    color: var(--ink);
+}
+
+.l-headline em {
+    font-style: normal;
+    color: var(--lime-ink);
+    text-decoration: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: var(--lime);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 7px;
+}
+
+.l-sub {
+    max-width: 540px;
+    margin: 26px auto 0;
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+}
+
+.l-badges {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 30px 0 0;
+}
+
+.l-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    background: var(--card-bg);
+    border: var(--hairline);
+    border-radius: 999px;
+    padding: 7px 14px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.l-badge:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-1px);
+}
+
+.l-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lime-ink);
+    flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Product preview — built from the dashboard's REAL classes (timeline,
+   metrics row, feasibility arc), driven live by landing.js, so this is a
+   true reflection of the app rather than a redrawn mockup.
+   -------------------------------------------------------------------------- */
+.l-stage {
+    max-width: 900px;
+    margin: 68px auto 0;
+    padding: 0 32px;
+}
+
+.l-window {
+    background: var(--card-bg);
+    border: var(--hairline);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 24px 48px -28px rgba(22, 19, 15, 0.22);
+}
+
+.l-window-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    border-bottom: var(--hairline);
+    background: var(--bg-panel);
+}
+
+.l-window-strip {
+    width: 20px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--lime);
+}
+
+.l-window-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+/* Reused-from-dashboard metrics row, scaled to fit inside the preview */
+.l-window .metrics-row {
+    margin-bottom: 0;
+    border-top: 0;
+}
+
+.l-window .metric {
+    padding: 12px 16px;
+}
+
+.l-window .metric-value {
+    font-size: 18px;
+}
+
+.l-window-body {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+}
+
+.l-window .ov-section {
+    padding: 18px 20px;
+}
+
+.l-window .ov-section h2 {
+    font-size: 11.5px;
+    margin-bottom: 12px;
+}
+
+.l-window .timeline .tl-row {
+    padding: 5px 0;
+}
+
+/* --------------------------------------------------------------------------
+   How it works — synced with the preview's cycling state via landing.js
+   -------------------------------------------------------------------------- */
+.l-how {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 112px 32px 0;
+}
+
+.l-how-head {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.l-how-head h2 {
+    font-family: var(--l-display);
+    font-weight: 700;
+    font-size: 24px;
+    margin: 0 0 8px;
+    letter-spacing: -0.005em;
+}
+
+.l-how-head p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+}
+
+.l-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: var(--hairline);
+}
+
+.l-step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 16px;
+    padding: 17px 14px 17px 10px;
+    border-bottom: var(--hairline);
+    border-radius: 8px;
+    transition: background 0.25s ease, padding-left 0.2s ease;
+}
+
+.l-step::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 2px;
+    background: transparent;
+    transition: background 0.25s ease;
+}
+
+.l-step:hover {
+    padding-left: 16px;
+}
+
+.l-step.is-active {
+    background: var(--lime-soft);
+}
+
+.l-step.is-active::before {
+    background: var(--lime-ink);
+}
+
+.l-step-index {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: var(--hairline);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-faint);
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.l-step.is-active .l-step-index {
+    background: var(--lime-ink);
+    border-color: var(--lime-ink);
+    color: var(--bg);
+}
+
+.l-step-name {
+    font-weight: 700;
+    font-size: 14.5px;
+    margin: 0 0 3px;
+}
+
+.l-step-desc {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+
+/* --------------------------------------------------------------------------
+   Final CTA
+   -------------------------------------------------------------------------- */
+.l-cta {
+    text-align: center;
+    padding: 104px 32px 92px;
+}
+
+.l-cta h2 {
+    font-family: var(--l-display);
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    font-size: clamp(28px, 3.2vw, 40px);
+    margin: 0 0 24px;
+}
+
+.l-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--lime-ink);
+    background: var(--lime);
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 13px 26px;
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+}
+
+.l-cta-btn:hover {
+    background: var(--lime-bright);
+    box-shadow: 0 10px 24px -14px rgba(42, 58, 0, 0.5);
+}
+
+.l-cta-btn:active {
+    transform: translateY(1px);
+}
+
+/* --------------------------------------------------------------------------
+   Footer — plain sans (not mono), a touch more presence than a thin line
+   -------------------------------------------------------------------------- */
+.l-footer {
+    border-top: var(--hairline);
+}
+
+.l-footer-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 26px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--ink-faint);
+}
+
+.l-footer-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.l-footer-mark {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    opacity: 0.9;
+}
+
+.l-footer-links {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.l-footer-links a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.15s ease;
+}
+
+.l-footer-links a:hover {
+    color: var(--ink);
+}
+
+/* --------------------------------------------------------------------------
+   Motion — restrained: a single load-in on the hero, hover states, and the
+   JS-driven pipeline cycle in the preview / how-it-works sync
+   -------------------------------------------------------------------------- */
+.l-fade-in {
+    animation: l-rise 0.6s ease both;
+}
+
+.l-fade-in.l-delay-1 {
+    animation-delay: 0.08s;
+}
+
+.l-fade-in.l-delay-2 {
+    animation-delay: 0.16s;
+}
+
+.l-fade-in.l-delay-3 {
+    animation-delay: 0.24s;
+}
+
+@keyframes l-rise {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .l-fade-in {
+        animation: none;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Below ~960px: acceptable degradation only, per spec (desktop is the target)
+   -------------------------------------------------------------------------- */
+@media (max-width: 960px) {
+    .l-window-body {
+        grid-template-columns: 1fr;
+    }
+
+    .l-window .ov-section:first-child {
+        border-bottom: var(--hairline);
+    }
+
+    .l-window .metrics-row {
+        flex-wrap: wrap;
+    }
+
+    .l-window .metric {
+        flex: 1 1 50%;
+    }
+
+    .l-footer-inner {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+}

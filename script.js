@@ -24,12 +24,25 @@
   var outputsPanel = $("#outputs-panel");
   var historyList = $("#history-list");
   var historyEmpty = $("#history-empty");
-  var historyCount = $("#history-count");
+  var historyCountBadge = $("#side-history-count");
   var historyClear = $("#history-clear");
   var toastEl = $("#toast");
   var pipelineState = $("#pipeline-state");
   var themeBtn = $("#theme-btn");
   var exportBtn = $("#export-btn");
+
+  var feasEmptyEl = $("#feas-empty");
+  var feasLiveEl = $("#feas-live");
+  var feasArcFillEl = $("#feas-arc-fill");
+  var feasArcNumEl = $("#feas-arc-num");
+  var feasVerdictLineEl = $("#feas-verdict-line");
+  var feasAxesEl = $("#feas-axes");
+  var nextOutputEl = $("#next-output-text");
+
+  var mProjectsEl = $("#m-projects");
+  var mFeasEl = $("#m-feas");
+  var mScaffoldsEl = $("#m-scaffolds");
+  var mTasksEl = $("#m-tasks");
 
   var STEP_ORDER = ["github", "research", "feasibility", "architecture", "stack", "builder", "task"];
 
@@ -38,7 +51,6 @@
   var THEME_KEY = "abridgeai.theme.v1";
 
   var running = false;
-  // The most recently generated / loaded project record (drives the export button).
   var currentProject = null;
 
   // ------------------------------------------------------------------------
@@ -66,7 +78,6 @@
     };
   }
 
-  // djb2 — stable hash so agent outputs are deterministic per input string.
   function hash(str) {
     var h = 5381;
     var s = String(str == null ? "" : str);
@@ -76,7 +87,6 @@
     return h >>> 0;
   }
 
-  // Deterministic pick: same seed + array => same items every time.
   function pick(seed, arr, count) {
     var items = arr.slice();
     var out = [];
@@ -102,6 +112,31 @@
     clearTimeout(toast._t);
     toast._t = setTimeout(function () { toastEl.hidden = true; }, 2600);
   }
+
+  // ------------------------------------------------------------------------
+  // View switching (Overview / New Project / Projects) — same single page,
+  // just three visibility states. No routing, no new pages.
+  // ------------------------------------------------------------------------
+  var VIEWS = ["overview", "new", "projects"];
+
+  function showView(name) {
+    VIEWS.forEach(function (v) {
+      var el = document.getElementById("view-" + v);
+      if (el) el.hidden = v !== name;
+    });
+    $$(".side-link").forEach(function (btn) {
+      btn.classList.toggle("is-active", btn.getAttribute("data-view") === name);
+    });
+  }
+
+  $$(".side-link").forEach(function (btn) {
+    btn.addEventListener("click", function () { showView(btn.getAttribute("data-view")); });
+  });
+
+  var newProjectBtn = $("#new-project-btn");
+  var backBtn = $("#back-btn");
+  if (newProjectBtn) newProjectBtn.addEventListener("click", function () { showView("new"); });
+  if (backBtn) backBtn.addEventListener("click", function () { showView("overview"); });
 
   // ------------------------------------------------------------------------
   // Theme (light / dark). Respects the stored choice, else the system theme.
@@ -185,8 +220,6 @@
     });
   }
 
-  // Try the public GitHub API; fall back to bundled sample data on any failure
-  // (offline, rate limit, non-existent user, CORS).
   async function loadGitHub(username) {
     var user = String(username || "").trim().replace(/^@/, "");
     if (!user) return loadSampleGitHub();
@@ -404,53 +437,23 @@
     }
   };
 
-    function stackParts(input) {
-    return String(input.stackCustom || "")
-      .split(",")
-      .map(function (part) { return part.trim(); })
-      .filter(Boolean);
-  }
-
-  function stackLabel(input) {
-    var parts = stackParts(input);
-    if (parts.length) return parts.join(" + ");
-    return (STACKS[input.stack] || STACKS.unsure).label;
-  }
-
   function stackAgentText(input) {
-    var parts = stackParts(input);
-    var custom = parts.length > 0;
     var key = input.stack || "unsure";
-    var s = custom ? null : (STACKS[key] || STACKS.unsure);
+    var s = STACKS[key] || STACKS.unsure;
     var comfort = input.comfort === "advanced" ? "skip guardrails, add CI + benchmarks early"
       : input.comfort === "intermediate" ? "add small tests per module, keep it boring"
-      : "prefer scaffolding + step-by-step notes, one feature at a time";
+        : "prefer scaffolding + step-by-step notes, one feature at a time";
 
     var lines = [];
-
-    if (custom) {
-      lines.push("Custom stack: " + parts.join(" + "));
-      lines.push("Stack parts: " + parts.join(", "));
-      lines.push("  app     define the smallest runnable slice for this stack");
-      lines.push("  ui      use the lightest UI layer from the chosen stack");
-      lines.push("  api     keep the first endpoint, command, or workflow narrow");
-      lines.push("  data    start with local files or SQLite unless the idea clearly needs more");
-      lines.push("  test    add one smoke test around the core flow");
-      lines.push("  lint    use the standard formatter/linter for these tools");
-      lines.push("");
-      lines.push("Why: Custom stack requested by the builder; keep the first AO task scoped so the agent does not invent extra architecture.");
-    } else {
-      lines.push("Stack: " + s.label);
-      lines.push("  app     " + s.app);
-      lines.push("  ui      " + s.ui);
-      lines.push("  api     " + s.api);
-      lines.push("  data    " + s.data);
-      lines.push("  test    " + s.test);
-      lines.push("  lint    " + s.lint);
-      lines.push("");
-      lines.push("Why: " + s.why);
-    }
-
+    lines.push("Stack: " + s.label);
+    lines.push("  app     " + s.app);
+    lines.push("  ui      " + s.ui);
+    lines.push("  api     " + s.api);
+    lines.push("  data    " + s.data);
+    lines.push("  test    " + s.test);
+    lines.push("  lint    " + s.lint);
+    lines.push("");
+    lines.push("Why: " + s.why);
     lines.push("Pace (" + input.comfort + "): " + comfort);
     return lines.join("\n");
   }
@@ -502,14 +505,13 @@
     var teamKey = TEAM_SIZES[input.team] ? input.team : "solo";
     var dl = String(input.deadline || "").toLowerCase();
 
-    // Deterministic score, 100 points across five weighted axes.
     var clarity = Math.min(30, Math.floor(words * 0.5) + (audience ? 3 : 0));
     var stackFit = comfort === "advanced" ? 25 : comfort === "intermediate" ? 20 : 15;
     var scope = { tool: 20, "data-pipeline": 18, service: 15, "web-app": 14, unsure: 10 }[typeKey];
     var time = dl.indexOf("month") !== -1 ? 14
       : dl.indexOf("week") !== -1 ? 12
-      : dl === "" ? 8
-      : /^\s*\d+\s*$/.test(String(input.deadline || "")) ? 9 : 10;
+        : dl === "" ? 8
+          : /^\s*\d+\s*$/.test(String(input.deadline || "")) ? 9 : 10;
     var builderFit = input.stack && input.stack !== "unsure" ? 10 : 6;
 
     var score = Math.max(0, Math.min(100, clarity + stackFit + scope + time + builderFit));
@@ -568,12 +570,23 @@
       verdict: verdict,
       verdictClass: verdictClass,
       estimate: estimate + " — ~" + weeks + " weeks",
+      // Real, already-computed sub-scores — surfaced as structured data so the
+      // Overview snapshot can show them as slim bars instead of the block of
+      // text below. Not new logic: same five weighted axes the text already
+      // reports.
+      axes: [
+        { label: "Idea clarity", value: clarity, max: 30 },
+        { label: "Stack fit", value: stackFit, max: 25 },
+        { label: "Scope", value: scope, max: 20 },
+        { label: "Time realism", value: time, max: 15 },
+        { label: "Builder fit", value: builderFit, max: 10 }
+      ],
       text: lines.join("\n")
     };
   }
 
   // ------------------------------------------------------------------------
-  // Builder Agent — AO handoff scaffold (file tree + files) and milestone plan
+  // Builder Agent — starter scaffold (file tree + files) and milestone plan
   // ------------------------------------------------------------------------
   function builderAgent(input, feasibility) {
     var stackKey = input.stack || "unsure";
@@ -586,8 +599,7 @@
 
     var lines = [];
     lines.push("Builder plan");
-    lines.push("AO handoff scaffold: " + files.length + " files · " + dirs + " directories (" + stackLabel(input) + ")");
-    lines.push("Use the ZIP as a scoped starting point for AO, not as production-ready code.");
+    lines.push("Scaffold: " + files.length + " files · " + dirs + " directories (" + stack.label + ")");
     if (stackKey === "unsure") {
       lines.push("Stack: recommended default (TypeScript / JavaScript) until the stack is decided.");
     }
@@ -676,8 +688,6 @@
       "__init__.py": "package marker",
       "README.md": "quick start + run instructions",
       "PLAN.md": "feasibility summary + milestones",
-      "AO_TASK.md": "scoped first PR prompt for AO",
-      "ACCEPTANCE_CRITERIA.md": "checks AO should satisfy before PR review",
       ".gitignore": "ignore build artifacts"
     };
     return map[name] || "project file";
@@ -692,156 +702,15 @@
     ];
   }
 
-  function scaffoldStackName(input) {
-    return stackLabel(input);
-  }
-
-  function scaffoldCommands(stackKey, slug) {
-    if (stackKey === "python") {
-      return {
-        install: "uv sync",
-        run: "uv run " + slug + " \"hello\"",
-        test: "uv run pytest",
-        build: "uv run ruff check ."
-      };
-    }
-    if (stackKey === "go") {
-      return {
-        install: "go mod tidy",
-        run: "go run . \"hello\"",
-        test: "go test ./...",
-        build: "go build ./..."
-      };
-    }
-    if (stackKey === "rust") {
-      return {
-        install: "cargo fetch",
-        run: "cargo run -- \"hello\"",
-        test: "cargo test",
-        build: "cargo check"
-      };
-    }
-    return {
-      install: "npm install",
-      run: "node dist/index.js \"hello\"",
-      test: "npm test",
-      build: "npm run build"
-    };
-  }
-
-  function scaffoldReadme(input, slug, name, desc, stackKey) {
-    var commands = scaffoldCommands(stackKey, slug);
-    var lines = [];
-    lines.push("# " + name);
-    lines.push("");
-    lines.push(desc);
-    lines.push("");
-    lines.push("## What this scaffold contains");
-    lines.push("");
-    lines.push("- A small deterministic core for the first vertical slice.");
-    lines.push("- A thin entry point that calls the core.");
-    lines.push("- A smoke test so AO has a concrete correctness target.");
-    lines.push("- PLAN.md, AO_TASK.md, and ACCEPTANCE_CRITERIA.md for scoped delegation.");
-    lines.push("");
-    lines.push("## Stack");
-    lines.push("");
-    lines.push(scaffoldStackName(input));
-    lines.push("");
-    lines.push("## Install");
-    lines.push("");
-    lines.push("```bash");
-    lines.push(commands.install);
-    lines.push("```");
-    lines.push("");
-    lines.push("## Run");
-    lines.push("");
-    lines.push("```bash");
-    lines.push(commands.run);
-    lines.push("```");
-    lines.push("");
-    lines.push("## Test");
-    lines.push("");
-    lines.push("```bash");
-    lines.push(commands.test);
-    lines.push("```");
-    lines.push("");
-    lines.push("## Build / lint");
-    lines.push("");
-    lines.push("```bash");
-    lines.push(commands.build);
-    lines.push("```");
-    lines.push("");
-    lines.push("## First AO task");
-    lines.push("");
-    lines.push("Use AO_TASK.md as the first prompt. Keep the first PR narrow and only implement the vertical slice described there.");
-    lines.push("");
-    lines.push("## What not to build yet");
-    lines.push("");
-    lines.push("- Authentication.");
-    lines.push("- Database persistence unless the first slice requires it.");
-    lines.push("- Multiple UI screens.");
-    lines.push("- Deployment automation.");
-    lines.push("- Extra integrations not listed in the acceptance criteria.");
-    lines.push("");
-    lines.push("This scaffold is an AO handoff scaffold, not production-ready code.");
-    lines.push("");
-    return lines.join("\n");
-  }
-
-  function aoTaskMarkdown(input, slug) {
-    var lines = [];
-    lines.push("# AO Task");
-    lines.push("");
-    lines.push("Project: " + (input.name || slug));
-    lines.push("Stack: " + scaffoldStackName(input));
-    lines.push("Deadline: " + (input.deadline || "not specified"));
-    lines.push("Comfort: " + (input.comfort || "beginner"));
-    lines.push("");
-    lines.push("## Idea");
-    lines.push("");
-    lines.push(input.idea || "Build the first deterministic vertical slice.");
-    lines.push("");
-    lines.push("## First PR prompt");
-    lines.push("");
-    lines.push("Implement the smallest runnable vertical slice for this project using the existing scaffold.");
-    lines.push("Keep the deterministic core separate from the entry point.");
-    lines.push("Add or update one smoke test that proves the core behavior.");
-    lines.push("Update README.md only if the run/test commands change.");
-    lines.push("Do not add authentication, persistence, deployment, or unrelated screens.");
-    lines.push("Open a PR with a concise summary and verification notes.");
-    lines.push("");
-    return lines.join("\n");
-  }
-
-  function acceptanceMarkdown(input, slug) {
-    var commands = scaffoldCommands(input.stack || "unsure", slug);
-    var lines = [];
-    lines.push("# Acceptance Criteria");
-    lines.push("");
-    lines.push("- Install works: `" + commands.install + "`");
-    lines.push("- Run command works: `" + commands.run + "`");
-    lines.push("- One smoke test passes: `" + commands.test + "`");
-    lines.push("- README instructions are accurate.");
-    lines.push("- The first vertical slice is implemented only.");
-    lines.push("- No unrelated features are added.");
-    lines.push("- The core logic remains deterministic and easy to test.");
-    lines.push("");
-    return lines.join("\n");
-  }
-
- function scaffoldFiles(input, slug) {
+  function scaffoldFiles(input, slug) {
     var stackKey = input.stack || "unsure";
     var name = input.name || slug;
     var desc = input.idea || "A deterministic tool.";
-    var files = [
-      { path: "PLAN.md", content: planMarkdown(input, slug) },
-      { path: "AO_TASK.md", content: aoTaskMarkdown(input, slug) },
-      { path: "ACCEPTANCE_CRITERIA.md", content: acceptanceMarkdown(input, slug) }
-    ];
-    var starter = stackKey === "python" ? pyStarter(slug, name, desc, input)
-      : stackKey === "go" ? goStarter(slug, name, desc, input)
-      : stackKey === "rust" ? rustStarter(slug, name, desc, input)
-      : tsStarter(slug, name, desc, input); // typescript + unsure (recommended default)
+    var files = [{ path: "PLAN.md", content: planMarkdown(input, slug) }];
+    var starter = stackKey === "python" ? pyStarter(slug, name, desc)
+      : stackKey === "go" ? goStarter(slug, name, desc)
+        : stackKey === "rust" ? rustStarter(slug, name, desc)
+          : tsStarter(slug, name, desc);
     return files.concat(starter);
   }
 
@@ -865,7 +734,7 @@
     return lines.join("\n");
   }
 
-  function tsStarter(slug, name, desc, input) {
+  function tsStarter(slug, name, desc) {
     var pkg = {
       name: slug,
       version: "0.1.0",
@@ -886,163 +755,200 @@
     return [
       { path: "package.json", content: JSON.stringify(pkg, null, 2) + "\n" },
       { path: "tsconfig.json", content: JSON.stringify(tsconfig, null, 2) + "\n" },
-      { path: "src/index.ts", content:
-        "// " + name + " — " + desc + "\n" +
-        "// Entry point: parse the input, run the deterministic core, print output.\n" +
-        "\n" +
-        'import { run } from "./core.js";\n' +
-        "\n" +
-        "function main() {\n" +
-        '  const input = process.argv.slice(2).join(" ");\n' +
-        '  process.stdout.write(run(input) + "\\n");\n' +
-        "}\n" +
-        "\n" +
-        "main();\n" },
-      { path: "src/core.ts", content:
-        "// Pure, deterministic core — no side effects, no external AI calls.\n" +
-        "export function run(input: string): string {\n" +
-        '  return "received: " + input;\n' +
-        "}\n" },
-      { path: "test/core.test.ts", content:
-        'import { describe, expect, it } from "vitest";\n' +
-        'import { run } from "../src/core.js";\n' +
-        "\n" +
-        'describe("core", () => {\n' +
-        '  it("handles empty input", () => {\n' +
-        '    expect(run("")).toBe("received: ");\n' +
-        "  });\n" +
-        "});\n" },
+      {
+        path: "src/index.ts", content:
+          "// " + name + " — " + desc + "\n" +
+          "// Entry point: parse the input, run the deterministic core, print output.\n" +
+          "\n" +
+          'import { run } from "./core.js";\n' +
+          "\n" +
+          "function main() {\n" +
+          '  const input = process.argv.slice(2).join(" ");\n' +
+          '  process.stdout.write(run(input) + "\\n");\n' +
+          "}\n" +
+          "\n" +
+          "main();\n"
+      },
+      {
+        path: "src/core.ts", content:
+          "// Pure, deterministic core — no side effects, no external AI calls.\n" +
+          "export function run(input: string): string {\n" +
+          '  return "received: " + input;\n' +
+          "}\n"
+      },
+      {
+        path: "test/core.test.ts", content:
+          'import { describe, expect, it } from "vitest";\n' +
+          'import { run } from "../src/core.js";\n' +
+          "\n" +
+          'describe("core", () => {\n' +
+          '  it("handles empty input", () => {\n' +
+          '    expect(run("")).toBe("received: ");\n' +
+          "  });\n" +
+          "});\n"
+      },
       { path: ".gitignore", content: "node_modules/\ndist/\n*.log\n" },
-      { path: "README.md", content:
-        "# " + name + "\n\n" + desc + "\n\n## Run\n\nnpm install\nnpm run build\nnode dist/index.js \"hello\"\n" }
+      {
+        path: "README.md", content:
+          "# " + name + "\n\n" + desc + "\n\n## Run\n\nnpm install\nnpm run build\nnode dist/index.js \"hello\"\n"
+      }
     ];
   }
 
-  function pyStarter(slug, name, desc, input) {
+  function pyStarter(slug, name, desc) {
     return [
-      { path: "pyproject.toml", content:
-        "[project]\n" +
-        "name = \"" + slug + "\"\n" +
-        "version = \"0.1.0\"\n" +
-        "description = \"" + desc + "\"\n" +
-        "requires-python = \">=3.12\"\n" +
-        "dependencies = [\"typer>=0.12\"]\n" +
-        "\n" +
-        "[project.scripts]\n" +
-        slug + " = \"src.main:cli\"\n" +
-        "\n" +
-        "[tool.pytest.ini_options]\n" +
-        "addopts = \"-q\"\n" +
-        "\n" +
-        "[tool.ruff]\n" +
-        "line-length = 100\n" },
+      {
+        path: "pyproject.toml", content:
+          "[project]\n" +
+          "name = \"" + slug + "\"\n" +
+          "version = \"0.1.0\"\n" +
+          "description = \"" + desc + "\"\n" +
+          "requires-python = \">=3.12\"\n" +
+          "dependencies = [\"typer>=0.12\"]\n" +
+          "\n" +
+          "[project.scripts]\n" +
+          slug + " = \"src.main:cli\"\n" +
+          "\n" +
+          "[tool.pytest.ini_options]\n" +
+          "addopts = \"-q\"\n" +
+          "\n" +
+          "[tool.ruff]\n" +
+          "line-length = 100\n"
+      },
       { path: "src/__init__.py", content: "" },
-      { path: "src/main.py", content:
-        '"""Entry point — Typer CLI over the deterministic core."""\n' +
-        "\n" +
-        "from src.core import run\n" +
-        "\n" +
-        "def cli():\n" +
-        "    import typer\n" +
-        "\n" +
-        "    app = typer.Typer()\n" +
-        "\n" +
-        "    @app.command()\n" +
-        "    def go(input_text: str):\n" +
-        '        """Run the pipeline over INPUT_TEXT."""\n' +
-        "        typer.echo(run(input_text))\n" +
-        "\n" +
-        "    app()\n" +
-        "\n" +
-        "if __name__ == \"__main__\":\n" +
-        "    cli()\n" },
-      { path: "src/core.py", content:
-        '"""Pure, deterministic core — no side effects, no external AI calls."""\n' +
-        "\n" +
-        "def run(input_text: str) -> str:\n" +
-        '    return "received: " + input_text\n' },
-      { path: "tests/test_core.py", content:
-        "from src.core import run\n" +
-        "\n" +
-        "def test_empty():\n" +
-        '    assert run("") == "received: "\n' },
+      {
+        path: "src/main.py", content:
+          '"""Entry point — Typer CLI over the deterministic core."""\n' +
+          "\n" +
+          "from src.core import run\n" +
+          "\n" +
+          "def cli():\n" +
+          "    import typer\n" +
+          "\n" +
+          "    app = typer.Typer()\n" +
+          "\n" +
+          "    @app.command()\n" +
+          "    def go(input_text: str):\n" +
+          '        """Run the pipeline over INPUT_TEXT."""\n' +
+          "        typer.echo(run(input_text))\n" +
+          "\n" +
+          "    app()\n" +
+          "\n" +
+          "if __name__ == \"__main__\":\n" +
+          "    cli()\n"
+      },
+      {
+        path: "src/core.py", content:
+          '"""Pure, deterministic core — no side effects, no external AI calls."""\n' +
+          "\n" +
+          "def run(input_text: str) -> str:\n" +
+          '    return "received: " + input_text\n'
+      },
+      {
+        path: "tests/test_core.py", content:
+          "from src.core import run\n" +
+          "\n" +
+          "def test_empty():\n" +
+          '    assert run("") == "received: "\n'
+      },
       { path: ".gitignore", content: "__pycache__/\n.venv/\n*.pyc\n" },
-       { path: "README.md", content: scaffoldReadme(input, slug, name, desc, "python") }
+      {
+        path: "README.md", content:
+          "# " + name + "\n\n" + desc + "\n\n## Run\n\nuv sync\nuv run " + slug + " \"hello\"\n"
+      }
     ];
   }
 
-  function goStarter(slug, name, desc, input) {
+  function goStarter(slug, name, desc) {
     return [
       { path: "go.mod", content: "module " + slug + "\n\ngo 1.22\n" },
-      { path: "main.go", content:
-        "package main\n" +
-        "\n" +
-        "import (\n" +
-        "  \"fmt\"\n" +
-        "  \"os\"\n" +
-        "  \"strings\"\n" +
-        "  \"" + slug + "/core\"\n" +
-        ")\n" +
-        "\n" +
-        "func main() {\n" +
-        "  input := strings.Join(os.Args[1:], \" \")\n" +
-        "  fmt.Println(core.Run(input))\n" +
-        "}\n" },
-      { path: "core/core.go", content:
-        "package core\n" +
-        "\n" +
-        "// Run is the pure, deterministic core.\n" +
-        "func Run(input string) string {\n" +
-        "  return \"received: \" + input\n" +
-        "}\n" },
-      { path: "core/core_test.go", content:
-        "package core\n" +
-        "\n" +
-        "import \"testing\"\n" +
-        "\n" +
-        "func TestRunEmpty(t *testing.T) {\n" +
-        "  if got := Run(\"\"); got != \"received: \" {\n" +
-        '    t.Fatalf("Run() = %q, want %q", got, "received: ")\n' +
-        "  }\n" +
-        "}\n" },
+      {
+        path: "main.go", content:
+          "package main\n" +
+          "\n" +
+          "import (\n" +
+          "  \"fmt\"\n" +
+          "  \"os\"\n" +
+          "  \"strings\"\n" +
+          "  \"" + slug + "/core\"\n" +
+          ")\n" +
+          "\n" +
+          "func main() {\n" +
+          "  input := strings.Join(os.Args[1:], \" \")\n" +
+          "  fmt.Println(core.Run(input))\n" +
+          "}\n"
+      },
+      {
+        path: "core/core.go", content:
+          "package core\n" +
+          "\n" +
+          "// Run is the pure, deterministic core.\n" +
+          "func Run(input string) string {\n" +
+          "  return \"received: \" + input\n" +
+          "}\n"
+      },
+      {
+        path: "core/core_test.go", content:
+          "package core\n" +
+          "\n" +
+          "import \"testing\"\n" +
+          "\n" +
+          "func TestRunEmpty(t *testing.T) {\n" +
+          "  if got := Run(\"\"); got != \"received: \" {\n" +
+          '    t.Fatalf("Run() = %q, want %q", got, "received: ")\n' +
+          "  }\n" +
+          "}\n"
+      },
       { path: ".gitignore", content: "bin/\n*.exe\n" },
-      { path: "README.md", content: scaffoldReadme(input, slug, name, desc, "go") }
+      {
+        path: "README.md", content:
+          "# " + name + "\n\n" + desc + "\n\n## Run\n\ngo run . \"hello\"\n"
+      }
     ];
   }
 
-  function rustStarter(slug, name, desc, input) {
+  function rustStarter(slug, name, desc) {
     return [
-      { path: "Cargo.toml", content:
-        "[package]\n" +
-        "name = \"" + slug + "\"\n" +
-        "version = \"0.1.0\"\n" +
-        "edition = \"2021\"\n" +
-        "\n" +
-        "[dependencies]\n" },
-      { path: "src/main.rs", content:
-        "mod core;\n" +
-        "\n" +
-        "fn main() {\n" +
-        "  let input: Vec<String> = std::env::args().skip(1).collect();\n" +
-        "  println!(\"{}\", core::run(&input.join(\" \")));\n" +
-        "}\n" },
-      { path: "src/core.rs", content:
-        "// Pure, deterministic core — no side effects, no external AI calls.\n" +
-        "pub fn run(input: &str) -> String {\n" +
-        "  format!(\"received: {input}\")\n" +
-        "}\n" +
-        "\n" +
-        "#[cfg(test)]\n" +
-        "mod tests {\n" +
-        "  use super::*;\n" +
-        "\n" +
-        "  #[test]\n" +
-        "  fn run_empty() {\n" +
-        "    assert_eq!(run(\"\"), \"received: \");\n" +
-        "  }\n" +
-        "}\n" },
+      {
+        path: "Cargo.toml", content:
+          "[package]\n" +
+          "name = \"" + slug + "\"\n" +
+          "version = \"0.1.0\"\n" +
+          "edition = \"2021\"\n" +
+          "\n" +
+          "[dependencies]\n"
+      },
+      {
+        path: "src/main.rs", content:
+          "mod core;\n" +
+          "\n" +
+          "fn main() {\n" +
+          "  let input: Vec<String> = std::env::args().skip(1).collect();\n" +
+          "  println!(\"{}\", core::run(&input.join(\" \")));\n" +
+          "}\n"
+      },
+      {
+        path: "src/core.rs", content:
+          "// Pure, deterministic core — no side effects, no external AI calls.\n" +
+          "pub fn run(input: &str) -> String {\n" +
+          "  format!(\"received: {input}\")\n" +
+          "}\n" +
+          "\n" +
+          "#[cfg(test)]\n" +
+          "mod tests {\n" +
+          "  use super::*;\n" +
+          "\n" +
+          "  #[test]\n" +
+          "  fn run_empty() {\n" +
+          "    assert_eq!(run(\"\"), \"received: \");\n" +
+          "  }\n" +
+          "}\n"
+      },
       { path: ".gitignore", content: "/target\n" },
-      { path: "README.md", content: scaffoldReadme(input, slug, name, desc, "rust") }
+      {
+        path: "README.md", content:
+          "# " + name + "\n\n" + desc + "\n\n## Run\n\ncargo run -- \"hello\"\n"
+      }
     ];
   }
 
@@ -1073,7 +979,7 @@
     var central = [];
     var offset = 0;
     var DOS_TIME = 0;
-    var DOS_DATE = 0x5821; // 2024-01-01 00:00 — fixed, so downloads are reproducible.
+    var DOS_DATE = 0x5821;
 
     files.forEach(function (f) {
       var nameBytes = enc.encode(f.path);
@@ -1083,8 +989,8 @@
       var v = new DataView(local.buffer);
       v.setUint32(0, 0x04034b50, true);
       v.setUint16(4, 20, true);
-      v.setUint16(6, 0x0800, true); // UTF-8 filename flag
-      v.setUint16(8, 0, true);      // store (no compression)
+      v.setUint16(6, 0x0800, true);
+      v.setUint16(8, 0, true);
       v.setUint16(10, DOS_TIME, true);
       v.setUint16(12, DOS_DATE, true);
       v.setUint32(14, crc, true);
@@ -1101,7 +1007,7 @@
 
     var centralChunks = [];
     var centralStart = offset;
-    central.forEach(function (c, i) {
+    central.forEach(function (c) {
       var hdr = new Uint8Array(46 + c.nameBytes.length);
       var v = new DataView(hdr.buffer);
       v.setUint32(0, 0x02014b50, true);
@@ -1186,29 +1092,102 @@
   }
 
   // ------------------------------------------------------------------------
-  // Pipeline UI
+  // Pipeline UI — vertical timeline
   // ------------------------------------------------------------------------
+  var NEXT_OUTPUT_LABELS = {
+    github: "Research scan — opportunities, risks, and a recommended direction.",
+    research: "Feasibility score — a /100 verdict with an effort estimate and risk register.",
+    feasibility: "Architecture direction — a module breakdown and data-flow blueprint.",
+    architecture: "Tech stack recommendation matched to your comfort level.",
+    stack: "Builder scaffold — starter files and a milestone checklist, downloadable as a .zip.",
+    builder: "AO-ready task prompt, assembled from everything above.",
+    task: "Pipeline complete — download the scaffold or copy the task prompt below."
+  };
+
+  function updateNextOutputText(justCompletedStep) {
+    if (!nextOutputEl) return;
+    nextOutputEl.textContent = NEXT_OUTPUT_LABELS[justCompletedStep] || "";
+  }
+
   function setStepState(step, state) {
     var el = pipelineEl.querySelector('[data-step="' + step + '"]');
     if (!el) return;
     el.classList.remove("is-running", "is-done");
     if (state === "running") el.classList.add("is-running");
     if (state === "done") el.classList.add("is-done");
-    var statusEl = el.querySelector(".pipe-status");
-    statusEl.textContent = state === "running" ? "running…" : state === "done" ? "done" : "queued";
+    var st = el.querySelector(".tl-status");
+    st.textContent = state === "running" ? "in progress" : state === "done" ? "completed" : "pending";
+    if (state === "done") updateNextOutputText(step);
   }
 
   function resetSteps() {
     STEP_ORDER.forEach(function (step) { setStepState(step, "queued"); });
+    if (nextOutputEl) nextOutputEl.textContent = "Add an idea and run the pipeline to get started.";
+    if (feasEmptyEl) feasEmptyEl.hidden = false;
+    if (feasLiveEl) feasLiveEl.hidden = true;
   }
 
   function setPipelineState(state) {
-    pipelineState.textContent = state;
+    pipelineState.textContent = "· " + state;
   }
 
   function setStatus(state, text) {
     statusEl.setAttribute("data-state", state);
     statusText.textContent = text;
+  }
+
+  // Feasibility snapshot (Overview) — big number + arc + the five real axes.
+  function renderFeasibilitySnapshot(feas) {
+    if (!feasLiveEl) return;
+    feasEmptyEl.hidden = true;
+    feasLiveEl.hidden = false;
+
+    var r = 32;
+    var circumference = 2 * Math.PI * r;
+    var pct = Math.max(0, Math.min(100, feas.score)) / 100;
+    feasArcFillEl.style.strokeDasharray = circumference.toFixed(2);
+    feasArcFillEl.style.strokeDashoffset = (circumference * (1 - pct)).toFixed(2);
+    $("#feas-arc-num").textContent = feas.score;
+
+    feasVerdictLineEl.textContent = feas.verdict;
+    feasVerdictLineEl.setAttribute("data-verdict", feas.verdictClass || "good");
+
+    feasAxesEl.innerHTML = "";
+    (feas.axes || []).forEach(function (a) {
+      var pctA = Math.max(0, Math.min(100, (a.value / a.max) * 100));
+      var row = document.createElement("div");
+      row.className = "feas-axis-row";
+      row.innerHTML =
+        '<span class="feas-axis-label">' + esc(a.label) + "</span>" +
+        '<span class="feas-axis-track"><span class="feas-axis-fill" style="width:' + pctA + '%"></span></span>' +
+        '<span class="feas-axis-val">' + a.value + "/" + a.max + "</span>";
+      feasAxesEl.appendChild(row);
+    });
+  }
+
+  // ------------------------------------------------------------------------
+  // Metrics row — derived entirely from real saved history, never fabricated
+  // ------------------------------------------------------------------------
+  function deriveMetrics(items) {
+    var projects = items.length;
+    var feasScores = items
+      .filter(function (it) { return it.outputs && it.outputs.feasibility && typeof it.outputs.feasibility.score === "number"; })
+      .map(function (it) { return it.outputs.feasibility.score; });
+    var feasAvg = feasScores.length
+      ? Math.round(feasScores.reduce(function (a, b) { return a + b; }, 0) / feasScores.length)
+      : null;
+    var scaffolds = items.filter(function (it) { return it.outputs && it.outputs.builder && it.outputs.builder.files && it.outputs.builder.files.length; }).length;
+    var tasks = items.filter(function (it) { return it.outputs && (it.outputs.prompt || it.prompt); }).length;
+    return { projects: projects, feasAvg: feasAvg, scaffolds: scaffolds, tasks: tasks };
+  }
+
+  function renderMetrics() {
+    if (!mProjectsEl) return;
+    var m = deriveMetrics(readHistory());
+    mProjectsEl.textContent = m.projects;
+    mFeasEl.textContent = m.feasAvg == null ? "—" : m.feasAvg + "%";
+    mScaffoldsEl.textContent = m.scaffolds;
+    mTasksEl.textContent = m.tasks;
   }
 
   function addOutputCard(index, title, bodyHtml, opts) {
@@ -1289,7 +1268,6 @@
     body.appendChild(wrap);
   }
 
-  // Feasibility card: score meter + verdict badge, then the full text.
   function renderFeasibilityCard(feas) {
     var card = addOutputCard(3, "Feasibility Agent", "", { agent: "feasibility", copyText: feas.text });
     var body = $(".card-body", card);
@@ -1327,7 +1305,6 @@
     return card;
   }
 
-  // Builder card: full plan text + a scaffold (.zip) download action.
   function renderBuilderCard(builder) {
     var card = addOutputCard(6, "Builder Agent", "", { agent: "builder", copyText: builder.text });
     var headActions = $(".card-head-actions", card);
@@ -1398,7 +1375,7 @@
     L.push("## Project");
     L.push("");
     L.push("- **Idea:** " + (record.idea || "—"));
-    L.push("- **Stack:** " + stackLabel(record));
+    L.push("- **Stack:** " + (STACKS[record.stack] || STACKS.unsure).label);
     L.push("- **Type:** " + ((PROJECT_TYPES[record.type] || record.type || "—")));
     L.push("- **Team:** " + ((TEAM_SIZES[record.team] || record.team || "—")));
     L.push("- **Audience:** " + (record.audience || "—"));
@@ -1456,7 +1433,7 @@
   });
 
   // ------------------------------------------------------------------------
-  // History (left rail) — now stores full outputs, not just inputs
+  // History (Projects view) — stores full outputs, not just inputs
   // ------------------------------------------------------------------------
   function readHistory() {
     try {
@@ -1472,18 +1449,17 @@
     var items = readHistory();
     historyList.innerHTML = "";
     historyEmpty.style.display = items.length ? "none" : "";
-    historyCount.textContent = items.length;
+    if (historyCountBadge) historyCountBadge.textContent = items.length;
     historyClear.hidden = !items.length;
 
     items.forEach(function (item) {
       var li = document.createElement("li");
-      li.className = "history-item" + (item.id === activeId ? " is-active" : "");
-      // Keyboard-accessible: focusable and activatable with Enter / Space.
+      li.className = "history-row" + (item.id === activeId ? " is-active" : "");
       li.tabIndex = 0;
       li.setAttribute("aria-label", "Open project " + esc(item.name || item.idea || "untitled"));
       li.innerHTML =
-        '<p class="history-item-title">' + esc(item.name || item.idea || "Untitled") + "</p>" +
-        '<div class="history-item-meta">' + esc(item.time || "") + "</div>" +
+        '<div><p class="history-row-title">' + esc(item.name || item.idea || "Untitled") + "</p>" +
+        '<div class="history-row-meta">' + esc(item.time || "") + "</div></div>" +
         '<button type="button" class="history-item-del" aria-label="Delete ' + esc(item.name || item.idea || "project") + '">×</button>';
       li.addEventListener("click", function () {
         loadProject(item);
@@ -1502,6 +1478,8 @@
       });
       historyList.appendChild(li);
     });
+
+    renderMetrics();
   }
 
   function deleteHistoryItem(id) {
@@ -1532,6 +1510,7 @@
 
   function loadProject(item) {
     fillForm(item);
+    showView("overview");
     renderHistory(item.id);
     renderSavedProject(item);
   }
@@ -1539,7 +1518,6 @@
   function fillForm(item) {
     $("#f-name").value = item.name || "";
     $("#f-stack").value = item.stack || "typescript";
-    $("#f-stack-custom").value = item.stackCustom || "";
     $("#f-github").value = item.github || "";
     $("#f-idea").value = item.idea || "";
     $("#f-deadline").value = item.deadline || "";
@@ -1553,7 +1531,6 @@
     return {
       name: $("#f-name").value.trim(),
       stack: $("#f-stack").value,
-      stackCustom: $("#f-stack-custom").value.trim(),
       github: $("#f-github").value.trim(),
       idea: $("#f-idea").value.trim(),
       deadline: $("#f-deadline").value.trim(),
@@ -1564,7 +1541,6 @@
     };
   }
 
-  // Re-render a saved project's outputs without re-running the pipeline.
   function renderSavedProject(item) {
     outputsEl.innerHTML = "";
     resetSteps();
@@ -1587,12 +1563,12 @@
       agent: "research",
       copyText: saved.research
     });
-    // Feasibility + Builder are deterministic, so they can be re-derived from
-    // the saved inputs even when a project predates this upgrade.
-    var feas = saved.feasibility
-      ? { score: saved.feasibility.score, verdict: saved.feasibility.verdict, verdictClass: saved.feasibility.verdictClass || "good", text: saved.feasibility.text }
-      : feasibilityAgent(item);
+    // Deterministic, so always safe to recompute fresh — guarantees the
+    // Overview snapshot's five axes exist even for projects saved before
+    // this upgrade.
+    var feas = feasibilityAgent(item);
     renderFeasibilityCard(feas);
+    renderFeasibilitySnapshot(feas);
     addOutputCard(4, "Architecture Agent", "<pre>" + esc(saved.architecture) + "</pre>", {
       agent: "architecture",
       copyText: saved.architecture
@@ -1605,6 +1581,7 @@
     renderBuilderCard(builder);
     renderPromptCard(prompt);
     STEP_ORDER.forEach(function (step) { setStepState(step, "done"); });
+    updateNextOutputText("task");
     setPipelineState("complete");
     setStatus("done", "saved · " + (item.time || ""));
     currentProject = item;
@@ -1613,7 +1590,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // Draft autosave — refresh-safe form persistence
+  // Draft autosave
   // ------------------------------------------------------------------------
   function writeDraft() {
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify(readForm())); } catch (e) { /* ignore */ }
@@ -1629,7 +1606,6 @@
     if (!draft) return;
     $("#f-name").value = draft.name || "";
     $("#f-stack").value = draft.stack || "typescript";
-    $("#f-stack-custom").value = draft.stackCustom || "";
     $("#f-github").value = draft.github || "";
     $("#f-idea").value = draft.idea || "";
     $("#f-deadline").value = draft.deadline || "";
@@ -1642,12 +1618,11 @@
   form.addEventListener("input", debounce(writeDraft, 350));
 
   // ------------------------------------------------------------------------
-  // Load example — one click to try the pipeline with sample data
+  // Load example
   // ------------------------------------------------------------------------
   exampleBtn.addEventListener("click", function () {
     $("#f-name").value = "Ada";
     $("#f-stack").value = "python";
-    $("#f-stack-custom").value = "Python, FastAPI, React";
     $("#f-github").value = "octocat";
     $("#f-idea").value = "A CLI that turns meeting notes into action items, with a simple web dashboard.";
     $("#f-deadline").value = "4 weeks";
@@ -1670,7 +1645,6 @@
     formHint.textContent = "";
     outputsEl.innerHTML = "";
     outputsPanel.hidden = true;
-    // No brief to export while a fresh run is in progress.
     currentProject = null;
     updateExportBtn();
 
@@ -1678,7 +1652,6 @@
     setPipelineState("running");
     setStatus("running", "running pipeline");
 
-    // 1 — GitHub Agent (real API with sample fallback)
     setStepState("github", "running");
     setStatus("running", "github agent…");
     var gh = await loadGitHub(input.github);
@@ -1692,7 +1665,6 @@
     });
     setStepState("github", "done");
 
-    // 2 — Research Agent
     setStepState("research", "running");
     setStatus("running", "research agent…");
     await sleep(900);
@@ -1703,15 +1675,14 @@
     });
     setStepState("research", "done");
 
-    // 3 — Feasibility Agent
     setStepState("feasibility", "running");
     setStatus("running", "feasibility agent…");
     await sleep(800);
     var feas = feasibilityAgent(input);
     renderFeasibilityCard(feas);
+    renderFeasibilitySnapshot(feas);
     setStepState("feasibility", "done");
 
-    // 4 — Architecture Agent
     setStepState("architecture", "running");
     setStatus("running", "architecture agent…");
     await sleep(900);
@@ -1722,7 +1693,6 @@
     });
     setStepState("architecture", "done");
 
-    // 5 — Tech Stack Agent
     setStepState("stack", "running");
     setStatus("running", "tech stack agent…");
     await sleep(800);
@@ -1733,7 +1703,6 @@
     });
     setStepState("stack", "done");
 
-    // 6 — Builder Agent (starter scaffold + milestone plan)
     setStepState("builder", "running");
     setStatus("running", "builder agent…");
     await sleep(900);
@@ -1741,7 +1710,6 @@
     renderBuilderCard(builder);
     setStepState("builder", "done");
 
-    // 7 — AO Task Agent (assembles the copyable prompt)
     setStepState("task", "running");
     setStatus("running", "assembling AO task…");
     await sleep(800);
@@ -1753,7 +1721,7 @@
       githubFirstLine: ghText.split("\n")[0],
       feasLine: feas.score + "/100 — " + feas.verdict,
       builderLine: builder.files.length + " files · " + countDirs(builder.files) + " dirs — download the scaffold (.zip)",
-      stackLabel: stackLabel(input),
+      stackLabel: (STACKS[input.stack] || STACKS.unsure).label,
       architectureFirstLine: archText.split("\n")[0],
       researchFirstLine: researchText.split("\n")[0]
     };
@@ -1769,7 +1737,6 @@
         id: Date.now().toString(36),
         name: input.name,
         stack: input.stack,
-        stackCustom: input.stackCustom,
         github: input.github,
         idea: input.idea,
         deadline: input.deadline,
@@ -1781,7 +1748,7 @@
         outputs: {
           github: { text: ghText, badge: ghBadge },
           research: researchText,
-          feasibility: { score: feas.score, verdict: feas.verdict, verdictClass: feas.verdictClass, text: feas.text },
+          feasibility: { score: feas.score, verdict: feas.verdict, verdictClass: feas.verdictClass, axes: feas.axes, text: feas.text },
           architecture: archText,
           stack: stackText,
           builder: { text: builder.text, folder: builder.folder, files: builder.files },
@@ -1808,7 +1775,7 @@
       formHint.textContent = "Add a project idea first.";
       return;
     }
-    // Never leave the UI stuck if something unexpected fails mid-pipeline.
+    showView("overview");
     runPipeline(input).catch(function () {
       running = false;
       runBtn.disabled = false;
@@ -1821,7 +1788,6 @@
 
   form.addEventListener("submit", onSubmit);
 
-  // Ctrl/Cmd + Enter anywhere in the form runs the pipeline.
   form.addEventListener("keydown", function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
@@ -1836,4 +1802,5 @@
   restoreDraft();
   renderHistory();
   updateExportBtn();
+  showView("overview");
 })();
