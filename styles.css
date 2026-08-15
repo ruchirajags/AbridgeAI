@@ -141,6 +141,23 @@ button {
   display: block;
 }
 
+.navbar-logo {
+  display: block;
+  /* The original logo.png has dimensions 837x569, but the active artwork is 
+     only in the top bounding box (35, 0, 837, 175) with 394px of empty 
+     transparent space at the bottom.
+     To display a crisp, proportional 28px tall logo with no layout distortion 
+     or unwanted vertical blank space, we scale the image container and crop:
+     - Target visible height = 28px
+     - Scale factor = 28 / 175 = 0.16
+     - Container width = 837 * 0.16 = 134px
+     - Shift left by 35 * 0.16 = 5.6px to align the active artwork on the left */
+  width: 134px;
+  height: 28px;
+  object-fit: cover;
+  object-position: -5.6px 0px;
+}
+
 .side-brand-name {
   font-weight: 800;
   font-size: 15px;
