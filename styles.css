@@ -113,9 +113,12 @@ button {
 /* --------------------------------------------------------------------------
    Shell: sidebar + main
    -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   Shell: sidebar + main workspace grid
+   -------------------------------------------------------------------------- */
 .shell {
   display: grid;
-  grid-template-columns: 224px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -124,45 +127,26 @@ button {
   flex-direction: column;
   background: var(--bg-panel);
   border-right: var(--hairline);
-  padding: 20px 14px;
+  padding: 24px 16px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
 }
 
 .side-brand {
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 4px 8px 22px;
-}
-
-.side-brand-mark {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  display: block;
+  padding: 4px 8px 24px;
 }
 
 .navbar-logo {
   display: block;
-  /* The original logo.png has dimensions 837x569, but the active artwork is 
-     only in the top bounding box (35, 0, 837, 175) with 394px of empty 
-     transparent space at the bottom.
-     To display a crisp, proportional 28px tall logo with no layout distortion 
-     or unwanted vertical blank space, we scale the image container and crop:
-     - Target visible height = 28px
-     - Scale factor = 28 / 175 = 0.16
-     - Container width = 837 * 0.16 = 134px
-     - Shift left by 35 * 0.16 = 5.6px to align the active artwork on the left */
   width: 134px;
   height: 28px;
   object-fit: cover;
   object-position: -5.6px 0px;
-}
-
-.side-brand-name {
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  color: var(--ink);
 }
 
 .side-nav {
@@ -182,7 +166,7 @@ button {
   color: var(--ink-soft);
   font-size: 13.5px;
   font-weight: 600;
-  padding: 9px 10px;
+  padding: 10px 12px;
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
@@ -205,47 +189,200 @@ button {
   opacity: 0.85;
 }
 
+/* Projects history rail inside Sidebar */
+.side-history-section {
+  display: flex;
+  flex-direction: column;
+  margin-top: 32px;
+  flex: 1;
+}
+
+.side-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 8px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 8px;
+}
+
+.side-history-title {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+.side-history-section .history-empty {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  padding: 12px 8px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 6px;
+  background: transparent;
+  max-width: 100%;
+}
+
+.side-history-section .history-list-flat {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+}
+
+.side-history-section .history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  border-bottom: 0;
+}
+
+.side-history-section .history-row:last-child {
+  border-bottom: 0;
+}
+
+.side-history-section .history-row:hover {
+  background: var(--card-bg);
+}
+
+.side-history-section .history-row.is-active {
+  background: var(--lime-soft);
+  color: var(--lime-ink);
+}
+
+.side-history-section .history-row-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 130px;
+}
+
+.side-history-section .history-row-meta {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  margin-top: 1px;
+}
+
+.side-history-section .history-item-del {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.side-history-section .history-row:hover .history-item-del {
+  opacity: 1;
+}
+
+.side-history-section .history-item-del:hover {
+  color: var(--danger);
+  background: var(--bg-panel);
+}
+
 .side-spacer {
   flex: 1;
 }
 
-.side-bottom {
-  border-top: var(--hairline);
-  padding-top: 12px;
-  margin-top: 8px;
+/* --------------------------------------------------------------------------
+   Workspace containing Top Bar + Main Panel
+   -------------------------------------------------------------------------- */
+.workspace {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg);
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 40px;
+  background: var(--bg-panel);
+  border-bottom: var(--hairline);
+}
+
+.workspace-label {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+}
+
+.top-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .theme-btn {
-  width: 100%;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ink-soft);
-  background: transparent;
   border: var(--hairline);
-  border-radius: 999px;
-  padding: 8px 12px;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--ink-soft);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  padding: 0;
 }
 
 .theme-btn:hover {
   color: var(--ink);
-  border-color: var(--ink);
   background: var(--card-bg);
+  border-color: var(--line-strong);
 }
+
+.theme-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Switch sun/moon SVGs based on active theme */
+[data-theme="light"] .theme-btn .icon-sun { display: none; }
+[data-theme="light"] .theme-btn .icon-moon { display: block; }
+[data-theme="dark"] .theme-btn .icon-sun { display: block; }
+[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 
 /* --------------------------------------------------------------------------
    Main / views
    -------------------------------------------------------------------------- */
 .main {
   min-width: 0;
-  padding: 40px 44px 64px;
-  max-width: 1180px;
+  padding: 40px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .view[hidden] {
@@ -672,11 +809,26 @@ button {
 /* --------------------------------------------------------------------------
    New project form
    -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   New project form
+   -------------------------------------------------------------------------- */
 .proj-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px 24px;
-  max-width: 780px;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+}
+
+.form-main-col,
+.form-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .field {
@@ -685,39 +837,40 @@ button {
   gap: 6px;
 }
 
-.field--full {
-  grid-column: 1 / -1;
-}
-
 .field label {
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-.field input,
-.field select,
-.field textarea {
+.field input[type="text"],
+.field select {
   font: inherit;
   font-size: 14px;
   color: var(--ink);
-  background: transparent;
-  border: 0;
-  border-bottom: 1.5px solid var(--line);
-  border-radius: 0;
-  padding: 8px 2px;
-  width: 100%;
-  transition: border-color 0.15s ease;
-}
-
-.field textarea {
-  resize: vertical;
-  min-height: 100px;
-  line-height: 1.55;
+  background: var(--bg-input);
   border: var(--hairline);
   border-radius: 6px;
   padding: 10px 12px;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field textarea {
+  font: inherit;
+  font-size: 14.5px;
+  color: var(--ink);
   background: var(--bg-input);
+  border: var(--hairline);
+  border-radius: 6px;
+  padding: 12px 14px;
+  width: 100%;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 200px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .field input:focus,
@@ -725,21 +878,21 @@ button {
 .field textarea:focus {
   outline: none;
   border-color: var(--lime-ink);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .form-actions {
-  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .btn {
   font: inherit;
   font-weight: 700;
   font-size: 14px;
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 11px 22px;
   cursor: pointer;
   border: var(--hairline);
@@ -779,6 +932,7 @@ button {
 .btn--sm {
   font-size: 12.5px;
   padding: 7px 14px;
+  border-radius: 4px;
 }
 
 .form-hint {
@@ -788,31 +942,30 @@ button {
 }
 
 .form-note {
-  grid-column: 1 / -1;
   display: flex;
   align-items: flex-start;
   gap: 8px;
   font-size: 12.5px;
   color: var(--ink-faint);
-  margin-top: -4px;
+  margin-top: -8px;
 }
 
 /* --------------------------------------------------------------------------
    Outputs — flattened sections, not boxed cards. One divider between agents.
    -------------------------------------------------------------------------- */
 .outputs-section {
-  margin-top: 44px;
+  margin-top: 48px;
 }
 
 .outputs-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
 
 .outputs-head h2 {
-  font-size: 15px;
+  font-size: 16px;
   margin: 0;
   font-family: var(--display);
   font-weight: 700;
@@ -821,17 +974,22 @@ button {
 .outputs {
   display: flex;
   flex-direction: column;
+  border: var(--hairline);
+  background: var(--card-bg);
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .card {
   border: 0;
-  border-top: var(--hairline);
+  border-bottom: var(--hairline);
   background: transparent;
   border-radius: 0;
+  padding: 24px;
 }
 
 .card:last-child {
-  border-bottom: var(--hairline);
+  border-bottom: 0;
 }
 
 .card-head {
@@ -839,7 +997,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 16px 2px 8px;
+  padding: 0 0 12px;
   background: transparent;
   border-bottom: 0;
 }
@@ -848,7 +1006,7 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -864,7 +1022,7 @@ button {
   color: var(--ink-faint);
   border: var(--hairline);
   border-radius: 4px;
-  padding: 1px 6px;
+  padding: 2px 6px;
 }
 
 .card-badge {
@@ -873,12 +1031,12 @@ button {
   color: var(--ink-soft);
   background: var(--lime-soft);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 4px;
   padding: 2px 9px;
 }
 
 .card-body {
-  padding: 4px 2px 20px;
+  padding: 0;
   font-size: 14px;
 }
 
@@ -1072,103 +1230,6 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Projects (history) view — flat list, no card boxes
-   -------------------------------------------------------------------------- */
-.history-empty {
-  font-size: 13.5px;
-  color: var(--ink-faint);
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius);
-  padding: 18px;
-  max-width: 480px;
-}
-
-.history-list-flat {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-width: 720px;
-}
-
-.history-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 4px;
-  border-top: var(--hairline);
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.history-row:last-child {
-  border-bottom: var(--hairline);
-}
-
-.history-row:hover {
-  background: var(--bg-panel);
-}
-
-.history-row.is-active {
-  background: var(--lime-soft);
-}
-
-.history-row-title {
-  font-size: 13.5px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.history-row-meta {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--ink-faint);
-  margin-top: 2px;
-}
-
-.history-item-del {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  border: 0;
-  background: transparent;
-  color: var(--ink-faint);
-  font-family: var(--mono);
-  font-size: 14px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.history-item-del:hover {
-  color: var(--danger);
-  background: var(--card-bg);
-}
-
-.projects-head-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 720px;
-  margin-bottom: 8px;
-}
-
-.rail-action {
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ink-faint);
-  background: transparent;
-  border: 0;
-  padding: 2px 4px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.rail-action:hover {
-  color: var(--danger);
-}
-
-/* --------------------------------------------------------------------------
    Toast
    -------------------------------------------------------------------------- */
 .toast {
@@ -1188,7 +1249,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   Responsive — desktop-first; acceptable degradation only
+   Responsive — desktop-first
    -------------------------------------------------------------------------- */
 @media (max-width: 1080px) {
   .overview-grid {
@@ -1200,37 +1261,40 @@ button {
     border-left: 0;
     border-top: var(--hairline);
   }
+
+  .form-grid {
+    gap: 24px;
+  }
 }
 
-@media (max-width: 860px) {
+@media (max-width: 768px) {
   .shell {
     grid-template-columns: 1fr;
   }
 
   .side {
-    flex-direction: row;
-    align-items: center;
+    height: auto;
+    position: relative;
     border-right: 0;
     border-bottom: var(--hairline);
+    padding: 16px 20px;
+    gap: 16px;
   }
 
-  .side-nav {
-    flex-direction: row;
-  }
-
-  .side-spacer {
-    display: none;
-  }
-
-  .side-bottom {
-    border-top: 0;
-    margin: 0;
+  .side-brand {
     padding: 0;
-    margin-left: auto;
   }
 
-  .theme-btn {
-    width: auto;
+  .side-history-section {
+    margin-top: 12px;
+  }
+
+  .side-history-section .history-list-flat {
+    max-height: 180px;
+  }
+
+  .top-nav {
+    padding: 0 20px;
   }
 
   .main {
@@ -1244,6 +1308,7 @@ button {
   .ov-section {
     border-left: 0;
     border-top: var(--hairline);
+    padding: 20px;
   }
 
   .ov-section:first-child {
@@ -1258,10 +1323,20 @@ button {
     flex: 1 1 50%;
     border-left: 0;
     border-top: var(--hairline);
+    padding: 12px 16px;
   }
 
-  .proj-form {
+  .metric:nth-child(2) {
+    border-left: var(--hairline);
+  }
+
+  .metric:nth-child(4) {
+    border-left: var(--hairline);
+  }
+
+  .form-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 }
 

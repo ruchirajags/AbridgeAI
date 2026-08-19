@@ -155,7 +155,10 @@
     document.documentElement.setAttribute("data-theme", mode);
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = mode === "dark" ? "#151310" : "#b6e62c";
-    themeBtn.textContent = mode === "dark" ? "Light mode" : "Dark mode";
+    if (themeBtn) {
+      themeBtn.setAttribute("aria-label", mode === "dark" ? "Switch to light theme" : "Switch to dark theme");
+      themeBtn.title = mode === "dark" ? "Switch to light theme" : "Switch to dark theme";
+    }
   }
 
   function initTheme() {
